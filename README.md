@@ -9,6 +9,7 @@ Data Structure
 ![data architecture](https://storage.googleapis.com/kaggle-media/competitions/home-credit/home_credit.png)
 
 Main challenges:
+- Nested data structure - each data source with its specific class to handle feature engineering based on this specific data source
 - Feature Engineering: heavy aggregations over multiple time windows -> used parallelization with concurrent.futures 
 
 Overview of the architecture
