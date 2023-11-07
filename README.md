@@ -85,7 +85,11 @@ The key to predict interest rate is to understand that credit duration (or cnt p
 
 What can you do now? Let me explain it using a loan with 35.000 credit value and 1.000 annuity (both of these values are known for applications in train and test).What you can do, is iterate over different durations and check if interest rate makes sense.
 
-Have a look at attached file 'ir_table.jpg'. From this table you can see that only two interest rate values make sense: 10% or 11% (I assumed, based on previous applications, that around 8.5% is the lowest interest rate that a loan may get at Homecredit). Which one is correct? We don’t know, so we can compute various characteristics of “possible interest rates”, like min, max, median, etc, and let LGBM find the best correlation with TARGET. It turned out, that a minimum value of such a “possible” set of interest rates was a very good predictor of the actual interest rate, until…
+Have a look at attached file 'ir_table.jpg'. From this table you can see that only two interest rate values make sense: 10% or 11% (I assumed, based on previous applications, that around 8.5% is the lowest interest rate that a loan may get at Homecredit). 
+
+![it table](https://storage.googleapis.com/kaggle-forum-message-attachments/379104/10212/ir_table.jpg)
+
+Which one is correct? We don’t know, so we can compute various characteristics of “possible interest rates”, like min, max, median, etc, and let LGBM find the best correlation with TARGET. It turned out, that a minimum value of such a “possible” set of interest rates was a very good predictor of the actual interest rate, until…
 
 3.2. .. we understood, that you can actually use previous applications to build a model to predict interest rate.
 
