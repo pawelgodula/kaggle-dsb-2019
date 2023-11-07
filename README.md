@@ -28,7 +28,7 @@ There are few main ideas that we think we could have done differently vs. others
 
 Below is the detailed description of all the points above:
 
-1. Using deep learning to extract interactions among different data sources
+## 1. Using deep learning to extract interactions among different data sources
 We wondered how we can capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. How? Attached is the sample “user image” that we fed to the neural network (user_100006_image.xlsx ).
 
 You can see that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
@@ -43,7 +43,7 @@ Dense
 Output
 This model scored 0.72 AUC on cv, without any features from current application. It trained rather quickly = around 30 mins on GTX 1080. We have put oof predictions from this model as a feature into our LGBM model, which gave us around 0.001 on CV (improvement on an already very strong model with >3000 features) and 0.001 on LB. This means that the network was able to extract some information on top of >3000 hand-crafted features.
 
-2. Using nested models
+## 2. Using nested models
 One of the things that bothered us throughout the competition was a somehow arbitrary nature of various group-bys that we performed on data. For example, we supposed that an overdue installment 5 years ago is less important than 1 month ago, but what is the exact relationship? Traditional way is to test different thresholds using cv score, but there is also a way for the model to figure it out.
 
 In order to explain our approach, I will use an example of installment_payments data source.
@@ -65,7 +65,7 @@ The low auc scores for these models were hardly surprising, as they carry enormo
 
 This gave us 0.002 improvement on CV/ 0.004 improvement on LB, on our strong model with >3000 features.
 
-2.1 Another approach on credit card balance features
+### 2.1 Another approach on credit card balance features
 We have observed that there is a significant difference in train and test sets in ‘loan types’.
 The cash_loans to revolving_loans ratio in train and test set is respectively ~90/10 and ~99/1. That is why we have decided to use features generated on credit card balance set only in one final submission.
 
@@ -73,14 +73,14 @@ Our observation was that in the case of ‘nested feature’ generated on credit
 Despite the fact that only one third of the train and test sets we labeled by this feature we have trained model with only one additional feature and improvement on CV was shocking!
 From 0.805 to 0.811! This corresponds with the ratio we have mentioned before. It appears to be confirmed in our final result - that it is an overfit caused by cash_loans / revolving_loans ratio.
 
-3. Model to predict the interest rate
+## 3. Model to predict the interest rate (THE TRICK)
 We were wondering for a long time why the organizers did not share cnt_payments for current_application. And then it was clear - if we know amount of credit, amount of annuity and number of payments, we can calculate interest rate from the following formula:
 Annuity x CNT payments / Amount of Credit = (1+ir) ^ (CNT payment /12).
 This formula assumes annual payments, while in reality the payments were done in monthly fashion, but it was good enough as a proxy.
 
 The interest rate is the measure of risk that a current Homecredit model assigns to a customer (especially within given duration of loan). Hence, knowing interest rate means to some extent knowing the risk assessment from current HomeCredit model. From that moment on we set out on a journey to guess the interest rate of loans in train and test sets.
 
-3.1 First iteration: prediction of interest rate based on business understanding of credit products
+### 3.1 First iteration: prediction of interest rate based on business understanding of credit products
 The key to predict interest rate is to understand that credit duration (or cnt payment) is not a continuous variable - it belongs to a very specific set of values. When you look at cnt_payments from previous application, you see that majority of loans have a duration which is a multiple of 6. It makes sense - you don’t take a loan for 92.3 days, rather you take it for half a year, one year, 2 years etc. So, at the very beginning I assumed that duration can belong to a following set of values (in months): [6, 12, 18, 24, 30, 36, 42, 48, 54, 60].
 
 What can you do now? Let me explain it using a loan with 35.000 credit value and 1.000 annuity (both of these values are known for applications in train and test).What you can do, is iterate over different durations and check if interest rate makes sense.
@@ -91,7 +91,7 @@ Have a look at attached file 'ir_table.jpg'. From this table you can see that on
 
 Which one is correct? We don’t know, so we can compute various characteristics of “possible interest rates”, like min, max, median, etc, and let LGBM find the best correlation with TARGET. It turned out, that a minimum value of such a “possible” set of interest rates was a very good predictor of the actual interest rate, until…
 
-3.2. .. we understood, that you can actually use previous applications to build a model to predict interest rate.
+### 3.2. .. we understood, that you can actually use previous applications to build a model to predict interest rate.
 
 For majority of previous applications, you can calculate interest rates, because you have cnt_payment, credit amount and annuity. Then, you can treat interest rate calculated in such a way as a Target, and use features common between current application and previous application as features to explain it. But still, the most important features are those from the table above: min, max, mean, median over possible set of interest values. Features like credit amount, annuity amount etc. are only ‘helper’ features, letting the model choose properly between different possible values of interest rates.
 
@@ -99,7 +99,7 @@ We achieved 0.02 rmse on model to predict interest rate and 0.50 rmse on model t
 
 Interest rate prediction gave us 0.002 improvement on CV/ 0.004 improvement on LB, on our strong model with >3000 features.
 
-4. Using scoring model based on banking mechanism taken from articles and meetings
+## 4. Using scoring model based on banking mechanism taken from articles and meetings
 Another issue that we were exploring during the competition was the broad idea of currently used credit-risk-scoring banking models. We read some articles and conducted a series of meetings with people involved in credit risk scoring in banks. Thus, we have established that what we could create is a basic scoring models – logit and probit.
 
 Firstly we have prepared the list of features from application_train, previous_applications sets and aggregate them into groups.
@@ -110,14 +110,14 @@ logit
 probit
 The scores of those models are respectively 0.56 and 0.59. Nevertheless features created from those models (OOF) improve CV score by 0.0013 -> 0.001 LB
 
-5. Some additional ideas
+## 5. Some additional ideas
 Dealing with categorical features as numerical. For example, app_data.replace({'NAME_EDUCATION_TYPE': {'Lower secondary': 0, 'Secondary / secondary special': 1, 'Incomplete higher': 2, 'Higher education': 3, 'Academic degree': 4}}), prev_app_df.replace({'NAME_YIELD_GROUP': {'XNA': 0, 'low_action': 1, 'low_normal': 1, 'middle': 3, 'high': 4}})
 While making aggregation features, GroupBy data not only by one feature but also by combination of features. For example, by (‘CREDIT_TYPE’+’CREDIT_ACTIVE’).
 Using grouping by ‘time windows’. This allows you, for example, follow the change of credit card balance in different periods of time.
 
 
-Final remarks
+## Final remarks
 - For a full discussion of the solution please see [Kaggle forum](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64625)
 
-Author:
+## Author:
 [Narsil](https://www.kaggle.com/narsil), creator of a https://jobs-in-data.com/ - job search engine for data scientists.
