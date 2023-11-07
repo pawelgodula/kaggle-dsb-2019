@@ -4,6 +4,13 @@ Code to achieve 5th place out of 7176 teams in [Kaggle Homecredit Competition (2
 
 Architecture
 
+Data Structure
+
+![data architecture](https://storage.googleapis.com/kaggle-media/competitions/home-credit/home_credit.png)
+
+Main challenges:
+- Feature Engineering: heavy aggregations over multiple time windows -> used parallelization with concurrent.futures 
+
 Overview of the architecture
 
 Our best single model scored 0.80550 on Private LB, which would be enough for 3rd place. Unfortunately, it was rather impossible to select it among our solutions- it had neither the best CV (0.8064) nor LB (0.8150). Our best submission was a weighted average of 3 models (0.25, 0.25, 0.5), but scored the same on LB as one of the models in the mix. Maybe the fact that we didn’t put much attention to stacking (and that stacking gave us no improvement, and was much worse that the best single model) was our biggest mistake. We invested everything into feature engineering, because the data was so interesting to analyze.
