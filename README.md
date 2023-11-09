@@ -1,10 +1,15 @@
 # kaggle-homecredit
 
-Code to achieve 5th place out of 7176 teams in [Kaggle Homecredit Competition (2017)](https://www.kaggle.com/competitions/home-credit-default-risk)
+Code to achieve 5th place out of 7176 teams in [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk) (2017)
 
-Architecture
+## Architecture
 
-Data Structure
+Notes:
+- We used a single model in the final solution (no ensembling). We consider it a major omission on our side, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level ensembling.    
+- The code in this repo covers steps colored in grey.
+- In the comments section below we outline key elements of the architecture
+
+## Data Structure
 
 ![data architecture](https://storage.googleapis.com/kaggle-media/competitions/home-credit/home_credit.png)
 
@@ -12,13 +17,13 @@ Main challenges:
 - Nested data structure - each data source with its specific class to handle feature engineering based on this specific data source
 - Feature Engineering: heavy aggregations over multiple time windows -> used parallelization with concurrent.futures 
 
-Overview of the architecture
+## Comments on the architecture
 
-Our best single model scored 0.80550 on Private LB, which would be enough for 3rd place. Unfortunately, it was rather impossible to select it among our solutions- it had neither the best CV (0.8064) nor LB (0.8150). Our best submission was a weighted average of 3 models (0.25, 0.25, 0.5), but scored the same on LB as one of the models in the mix. Maybe the fact that we didn’t put much attention to stacking (and that stacking gave us no improvement, and was much worse that the best single model) was our biggest mistake. We invested everything into feature engineering, because the data was so interesting to analyze.
+Our best single model scored 0.80550 on Private LB, which would be enough for 3rd place. Unfortunately, it was rather impossible to select it among our solutions- it had neither the best CV (0.8064) nor LB (0.8150). Our best submission was a weighted average of 3 models (0.25, 0.25, 0.5), but scored the same on LB as one of the models in the mix. Maybe the fact that we didn’t pay much attention to stacking (and that stacking gave us no improvement, and was much worse that the best single model) was our biggest mistake. We invested everything into feature engineering, because the data was so interesting to analyze.
 
-We did a lot of hand-crafted features (around 8.000), out of which we selected around 3.000 using mechanism based on Olivier’s work.
+We did a lot of hand-crafted features (around 8.000), out of which we selected around 3.000 using a mechanism based on Olivier’s work.
 
-There are few main ideas that we think we could have done differently vs. others, and which gave us the lead on public LB.
+There are a few main ideas that we think we have done differently vs. others, and which gave us the lead on public LB.
 
 1. Using deep learning to extract interactions among different data sources
 2. Using “nested models”, with (2.1) a different approach to credit card balance features
