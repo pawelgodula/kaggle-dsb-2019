@@ -2,7 +2,7 @@
 
 This repository contains the main elements of our pipeline to achieve 5th place out of 7176 teams in [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk) (2017)
 
-## Architecture
+## Solution architecture
 ![DSB 2019 Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/repodsb2019_architecture.png)
 Notes:
 - The code in this repo covers steps colored in grey.
