@@ -2,7 +2,7 @@
 
 This repository contains the main elements of our pipeline to achieve 5th place out of 7176 teams in [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk) (2017)
 
-## Solution architecture
+## Solution Architecture
 ![DSB 2019 Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/repodsb2019_architecture.png)
 Notes:
 - The code in this repo covers steps colored in grey.
@@ -13,8 +13,8 @@ Notes:
 ![data architecture](https://storage.googleapis.com/kaggle-media/competitions/home-credit/home_credit.png)
 
 Main challenges:
-- Nested data structure - each data source with its specific class to handle feature engineering based on this specific data source
-- Feature Engineering: heavy aggregations over multiple time windows -> used parallelization with concurrent.futures 
+- Nested data structure -> We built a custom data processing class for every data source to handle the specificity of the feature engineering
+- Feature Engineering: heavy aggregations over multiple time windows -> We used parallelization with concurrent.futures to speed up the pipeline
 
 ## Comments on the architecture
 
