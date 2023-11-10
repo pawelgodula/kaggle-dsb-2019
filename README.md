@@ -99,7 +99,7 @@ We achieved 0.02 rmse on the model to predict interest rate and 0.50 rmse on the
 
 Interest rate prediction gave us a 0.002 improvement on CV/ 0.004 improvement on LB, on our strong model with >3000 features.
 
-#### 4. Feature selection
+### 4. Feature selection
 
 We did a lot of hand-crafted features (around 8.000), out of which we selected around 3.000 using [this mechanism](https://www.kaggle.com/code/ogrellier/feature-selection-with-null-importances). In this repo, it is substituted with a simple mechanism that also works well: if a feature has zero importance in at least one of the folds (on a model trained with `feature_fraction = 1.0`), it can be removed.
 
