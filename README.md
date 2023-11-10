@@ -50,7 +50,12 @@ In order to explain our approach, I will use an example of installment_payments 
 What we did:
 
 Add a “TARGET” column to installment_payments, by merging on SK_ID_CURR with application_train
-Run a lgbm model to predict which records have 0 or 1 target. This step allows a model to abstract “what type of behavior in installment payments generally leads to default in loan in current_application”. You can see in the attached example (2. installment_payments_example.xlsx), that the same “fraudulent” behavior (like missing money = installment amount - payment amount) a long time ago received a lower score compared to more recent similar behavior. We concluded then that the model learned to identify fraudulent behavior at the “behavior” level (without the need to aggregate or set time thresholds)
+Run a lgbm model to predict which records have 0 or 1 target. This step allows a model to abstract “what type of behavior in installment payments generally leads to default in loan in current_application”. You can see in the example below, that the same “fraudulent” behavior (like missing money = installment amount - payment amount) a long time ago received a lower score compared to more recent similar behavior. We concluded then that the model learned to identify fraudulent behavior at the “behavior” level (without the need to aggregate or set time thresholds)
+
+![Nested models predictions](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-nested.png)
+
+To the best of our knowledge as seasoned Kagglers, this is a unique approach of using LGBM to encode temporal importances of behaviors. 
+
 From step 2 we receive a bunch of oof predictions for every SK_ID_CURR on row-level in installment payments. Then we can aggregate: min, max, mean, median, etc., and attach them as features to the main model.
 We ran the same procedure on all data sources (previous application, credit card balance, pos cash balance, installment payments, bureau, bureau balance). OOF aggregated features on all of them added value, apart from Bureau Balance, which actually decreased cv and we didn’t use it in the end.
 We received very low auc on those “nested models”:
@@ -61,6 +66,7 @@ We received very low auc on those “nested models”:
 - installment payments: 0.58
 - bureau: 0.61
 - bureau balance: 0.55
+
 The low auc scores for these models were hardly surprising, as they carry an enormous amount of noise. Even for default clients, the majority of their behaviors are OK. The point is to identify those few behaviors that are common across defaulters.
 
 This gave us a 0.002 improvement on CV/ 0.004 improvement on LB, on our strong model with >3000 features.
