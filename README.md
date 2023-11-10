@@ -29,18 +29,21 @@ There are a few main ideas that we think we have done differently vs. others, an
 Below is a detailed description of all the points above:
 
 ### 1. Using deep learning to extract interactions among different data sources
-We wondered how we could capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in the external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. How? Attached is the sample “user image” that we fed to the neural network (user_100006_image.xlsx ).
+We wondered how we could capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in the external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. How? Below is the sample “user image” that we fed to the neural network:
+
+![user image for nn](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-user-image-for-nn.png)
 
 You can see that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
 
 The network architecture was as follows:
 
-Normalization - division by global max in every row
-Input (the “user image” in the format of n_characteristics x 96 months - we looked 8 years into the past)
-1-D convolution spanning 2 consecutive months (to see the change between periods)
-Bidirectional LSTM
-Dense
-Output
+- Normalization - division by global max in every row
+- Input (the “user image” in the format of n_characteristics x 96 months - we looked 8 years into the past)
+- 1-D convolution spanning 2 consecutive months (to see the change between periods)
+- Bidirectional LSTM
+- Dense
+- Output
+
 This model scored 0.72 AUC on cv, without any features from the current application. It trained rather quickly = around 30 mins on GTX 1080. We have put oof predictions from this model as a feature into our LGBM model, which gave us around 0.001 on CV (an improvement on an already very strong model with >3000 features) and 0.001 on LB. This means that the network was able to extract some information on top of >3000 hand-crafted features.
 
 ### 2. Using nested models
