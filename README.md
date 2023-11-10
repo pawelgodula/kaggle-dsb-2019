@@ -29,11 +29,12 @@ There are a few main ideas that we think we have done differently vs. others, an
 Below is a detailed description of all the points above:
 
 ### 1. Using deep learning to extract interactions among different data sources
-We wondered how we could capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in the external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. How? Below is the sample “user image” that we fed to the neural network:
+We wondered how we could capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in the external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. 
 
+How? Below is the sample “user image” that we fed to the neural network:
 ![user image for nn](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-user-image-for-nn.png)
 
-You can see that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
+You can see on the image above that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
 
 The network architecture was as follows:
 
