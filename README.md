@@ -36,7 +36,7 @@ How? Below is the sample “user image” that we fed to the neural network:
 
 You can see on the image above that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
 
-The network architecture was as follows:
+We used the following network architecture :
 
 ![NN architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/nn_architecture.png)
 
