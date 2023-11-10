@@ -38,12 +38,7 @@ You can see on the image above that we created a single vector of user character
 
 The network architecture was as follows:
 
-- Normalization - division by global max in every row
-- Input (the “user image” in the format of n_characteristics x 96 months - we looked 8 years into the past)
-- 1-D convolution spanning 2 consecutive months (to see the change between periods)
-- Bidirectional LSTM
-- Dense
-- Output
+![NN architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/nn_architecture.png)
 
 This model scored 0.72 AUC on cv, without any features from the current application. It trained rather quickly = around 30 mins on GTX 1080. We have put oof predictions from this model as a feature into our LGBM model, which gave us around 0.001 on CV (an improvement on an already very strong model with >3000 features) and 0.001 on LB. This means that the network was able to extract some information on top of >3000 hand-crafted features.
 
@@ -58,7 +53,7 @@ Run a lgbm model to predict which records have 0 or 1 target. This step allows a
 
 ![Nested models predictions](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-nested.png)
 
-To the best of our knowledge as seasoned Kagglers, this is a unique approach of using LGBM to encode temporal importances of behaviors. 
+To the best of our knowledge as seasoned Kagglers, this is a unique approach to using LGBM to encode the temporal importance of behaviors. 
 
 From step 2 we receive a bunch of oof predictions for every SK_ID_CURR on row-level in installment payments. Then we can aggregate: min, max, mean, median, etc., and attach them as features to the main model.
 We ran the same procedure on all data sources (previous application, credit card balance, pos cash balance, installment payments, bureau, bureau balance). OOF aggregated features on all of them added value, apart from Bureau Balance, which actually decreased cv and we didn’t use it in the end.
