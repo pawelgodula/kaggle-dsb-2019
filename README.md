@@ -7,7 +7,7 @@ I participated in this competition with my dear friends [Alvor](https://www.kagg
 ![DSB 2019 Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/repodsb2019_architecture.png)
 Notes:
 - The code in this repo covers steps colored in grey.
-- In the comments section below we outline key elements of the architecture. In retrospect, our key mistake was that we used a weighted average of 3 variations of a single model, but the differences between them were so small, that the weighted average scored the same as the single model. We put all of our effort into feature engineering. We consider it a major omission, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level stacking with ~90 base models. 
+- In the comments section below I outline key elements of the architecture. In retrospect, our key mistake was that we used a weighted average of 3 variations of a single model, but the differences between them were so small, that the weighted average scored the same as the single model. We put all of our effort into feature engineering. We consider it a major omission, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level stacking with ~90 base models. 
 
 ## Data Structure
 
