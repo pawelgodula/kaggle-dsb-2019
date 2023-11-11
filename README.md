@@ -4,7 +4,7 @@ This repository contains the main elements of my ML pipeline to achieve 5th plac
 I participated in this competition in a team with my dear friends [Alvor](https://www.kaggle.com/allvor) and [Mike](https://www.kaggle.com/meykds). Their contributions are not covered in this repo.
 
 ## Solution Architecture
-![DSB 2019 Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/repodsb2019_architecture.png)
+![Homecredit Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_architecture.png)
 Notes:
 - The code in this repo covers steps colored in grey.
 - In the comments section below I outline key elements of the architecture. In retrospect, our key mistake was that we used a weighted average of 3 variations of a single model, but the differences between them were so small, that the weighted average scored the same as the single model. We put all of our effort into feature engineering. We consider it a major omission, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level stacking with ~90 base models. 
@@ -33,13 +33,13 @@ Below is a detailed description of all the points above:
 We wondered how we could capture the interactions between signals coming from different data sources. For example, what if 20 months ago someone was rejected in the external Bureau, had a late payment in installment payments, and applied for a loan at Homecredit? These types of interactions are very hard to capture by humans because of the number of possible options. So, we turned to deep learning and turned this problem into an image classification problem. 
 
 How? Below is the sample “user image” that we fed to the neural network:
-![user image for nn](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-user-image-for-nn.png)
+![user image for nn](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit-user-image-for-nn.png)
 
 You can see on the image above that we created a single vector of user characteristics coming from different data sources for every month of user history, going as far as 96 months into the past (8 years was a cutoff in most data sources). Then we stacked those vectors and created a very sparse “user image”.
 
 We used the following CONV NN architecture :
 
-![NN architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/nn_architecture.png)
+![NN architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_nn_architecture.png)
 
 This model scored 0.72 AUC on cv, without any features from the current application. It trained rather quickly = around 30 mins on GTX 1080. We have put oof predictions from this model as a feature into our LGBM model, which gave us around 0.001 on CV (an improvement on an already very strong model with >3000 features) and 0.001 on LB. This means that the network was able to extract some information on top of >3000 hand-crafted features.
 
@@ -52,7 +52,7 @@ What we did:
 Add a “TARGET” column to installment_payments, by merging on SK_ID_CURR with application_train
 Run a lgbm model to predict which records have 0 or 1 target. This step allows a model to abstract “what type of behavior in installment payments generally leads to default in loan in current_application”. You can see in the example below, that the same “fraudulent” behavior (like missing money = installment amount - payment amount) a long time ago received a lower score compared to more recent similar behavior. We concluded then that the model learned to identify fraudulent behavior at the “behavior” level (without the need to aggregate or set time thresholds)
 
-![Nested models predictions](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/dsb-2019-nested.png)
+![Nested models predictions](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit-nested-image.png)
 
 To the best of our knowledge as seasoned Kagglers, this is a unique approach to using LGBM to encode the temporal importance of behaviors. 
 
