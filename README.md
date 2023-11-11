@@ -1,6 +1,6 @@
 # kaggle-homecredit
 
-This repository contains the main elements of my ML pipeline to achieve 5th place out of 7176 teams in the [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk) (2017).
+This repository contains the main elements of my ML pipeline to achieve 5th place out of 7176 teams in the [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk).
 I participated in this competition with my dear friends [Alvor](https://www.kaggle.com/allvor) and [Mike](https://www.kaggle.com/meykds). Their contributions are not covered in this repo.
 
 ## Solution Architecture
