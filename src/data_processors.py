@@ -59,7 +59,7 @@ def reduce_column_names(multi_level_df, prefix):
 aggregation_recipes = {
   
     'bureau' :
-              {
+            {
                'AMT_CREDIT_SUM_DEBT': ['sum','mean', "max", 'min', dispersion, share_na],
                'AMT_CREDIT_SUM': ['sum','mean', "max", 'min', dispersion, share_na],
                'AMT_CREDIT_SUM_LIMIT': ['sum','mean', "max", 'min', dispersion, share_na],
@@ -85,13 +85,15 @@ aggregation_recipes = {
                "interest" : ['sum', 'mean', "max", 'min', dispersion, share_na],
                "princ_to_repay_per_month": ['sum'],
                'amt_repaid': ["sum"]
-               },
-    'previous_app' : {'AMT_ANNUITY': ['sum','mean', "max", 'min', dispersion, share_na],
-           'AMT_APPLICATION': ['sum','mean', "max", 'min', dispersion, share_na],
-          'AMT_CREDIT': ['sum','mean', "max", 'min', dispersion, share_na],
-          'AMT_DOWN_PAYMENT': ['sum','mean', "max", 'min', dispersion, share_na],           
-          'AMT_GOODS_PRICE': ['sum','mean', "max", 'min', dispersion, share_na],
-          'HOUR_APPR_PROCESS_START': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            },
+    'previous_app' : 
+            {
+            'AMT_ANNUITY': ['sum','mean', "max", 'min', dispersion, share_na],
+                       'AMT_APPLICATION': ['sum','mean', "max", 'min', dispersion, share_na],
+           'AMT_CREDIT': ['sum','mean', "max", 'min', dispersion, share_na],
+           'AMT_DOWN_PAYMENT': ['sum','mean', "max", 'min', dispersion, share_na],           
+           'AMT_GOODS_PRICE': ['sum','mean', "max", 'min', dispersion, share_na],
+           'HOUR_APPR_PROCESS_START': ['sum', 'mean', "max", 'min', dispersion, share_na],
            'DAYS_DECISION': ['sum', 'mean', "max", 'min', dispersion, share_na],
            'CNT_PAYMENT': ['sum', 'mean', "max", 'min', dispersion, share_na],
            'NFLAG_INSURED_ON_APPROVAL': ['sum', 'mean', "max", 'min', dispersion, share_na],
@@ -172,9 +174,8 @@ aggregation_recipes = {
           }
 }
 
-
-  class MainData:
-    def __init__(self, path_to_data):
+class MainData:
+   def __init__(self, path_to_data, sampling = 1):
         self.path_to_data = path_to_data
         self.train_df = None
         self.test_df = None
@@ -183,11 +184,12 @@ aggregation_recipes = {
         self.y = None
         self.categorical_variables = []
         self.numerical_variables = []
-
+        self.sampling = sampling
+                
     def load_main_data(self):
         self.train_df = pd.read_csv(self.path_to_data + 'application_train.csv')
-        if sampling['main'] < 1:
-            self.train_df = self.train_df.sample(frac=sampling['main'])
+        if self.sampling < 1:
+            self.train_df = self.train_df.sample(frac=self.sampling)
         
         self.test_df = pd.read_csv(self.path_to_data + 'application_test.csv')
         self.y = np.array(self.train_df.loc[:, self.target_col]).reshape((self.train_df.shape[0],))
@@ -324,17 +326,18 @@ aggregation_recipes = {
         return self.full_df, self.target_col, self.y, 
 
 class BureauData:
-    def __init__(self, path_to_data):
+    def __init__(self, path_to_data, sampling):
         self.bureau_df = pd.read_csv(path_to_data + 'bureau.csv')
         self.dataset_name = 'bureau'
         self.agg_map = aggregation_recipes[self.dataset_name]
         self.feature_dfs_to_merge_with_main_df = []
         self.credit_types = ['all', 'Consumer credit', 'Credit card', 'Car loan', 'Mortgage', 'Microloan']
         self.credit_statuses = ['Active', 'Closed']
+        self.sampling = sampling
 
     def preprocess_data(self):
-        if sampling['bureau'] < 1:
-            self.bureau_df = self.bureau_df.sample(frac=sampling['bureau'])
+        if self.sampling < 1:
+            self.bureau_df = self.bureau_df.sample(frac=self.sampling)
         
         self.bureau_df["missing_info"] = self.bureau_df.isnull().sum(axis=1).astype(np.float32)
         self.bureau_df['credit_duration'] = np.floor_divide(self.bureau_df['DAYS_CREDIT_ENDDATE'] - self.bureau_df['DAYS_CREDIT'], 30).astype(np.float32)
@@ -383,7 +386,7 @@ class BureauData:
 
 
 class PreviousApplicationData:
-    def __init__(self, path_to_data):
+    def __init__(self, path_to_data, sampling = 1):
         self.pr_app = pd.read_csv(path_to_data + 'previous_application.csv')
         self.dataset_name = 'previous_app'
         self.agg_map = aggregation_recipes[self.dataset_name]
@@ -392,10 +395,11 @@ class PreviousApplicationData:
         self.categorical_variables = ["WEEKDAY_APPR_PROCESS_START", "NAME_CASH_LOAN_PURPOSE", "NAME_PAYMENT_TYPE","CODE_REJECT_REASON", "NAME_TYPE_SUITE", 
                                   "NAME_CLIENT_TYPE", "NAME_GOODS_CATEGORY","NAME_PRODUCT_TYPE",  "CHANNEL_TYPE", "NAME_SELLER_INDUSTRY", "NAME_YIELD_GROUP", 
                                   "PRODUCT_COMBINATION" ]
+        self.sampling = sampling
 
     def preprocess_data(self):
-        if sampling['pr_app'] < 1:
-            self.pr_app = self.pr_app.sample(frac=sampling['pr_app'])
+        if self.sampling < 1:
+            self.pr_app = self.pr_app.sample(frac=self.sampling)
         
         self.pr_app['is_x_sell'] = self.pr_app['PRODUCT_COMBINATION'].str.contains('X-Sell').fillna(0)
         self.pr_app['missing_info'] = self.pr_app.isnull().sum(axis=1)
@@ -481,7 +485,7 @@ class PreviousApplicationData:
 
 
 class InstallmentsPaymentsData:
-    def __init__(self, path_to_data):
+    def __init__(self, path_to_data, sampling = 1):
         self.ip = pd.read_csv(path_to_data + 'installments_payments.csv').sort_values(['SK_ID_PREV', "DAYS_INSTALMENT"])
         self.feature_dfs_to_merge_with_main_df = []
         self.days_in_month = days_in_month  
@@ -489,10 +493,11 @@ class InstallmentsPaymentsData:
         self.agg_map = aggregation_recipes[self.dataset_name]  
         self.lb_window_prefix_map = {-np.inf: 'all', -720: '720', -360: '360', -90: '90', -30: '30'}  
         self.version_filters = {None:'all', '0': '0' , '1' : '1', '>=2': '2andmore', '<3': 'first_2', '<6': 'first_5'} 
-        
+        self.sampling = sampling
+                
     def preprocess_data(self):
-        if sampling['inst_pmt'] < 1:
-            self.ip = self.ip.sample(frac=sampling['inst_pmt'])
+        if self.sampling < 1:
+            self.ip = self.ip.sample(frac=self.sampling)
         self.ip['delay'] = -(self.ip["DAYS_INSTALMENT"] - self.ip['DAYS_ENTRY_PAYMENT'])
         self.ip['lacking_money'] = np.maximum(self.ip['AMT_INSTALMENT'] - self.ip["AMT_PAYMENT"], 0)
         self.ip['surplus_money'] = np.maximum(self.ip["AMT_PAYMENT"] - self.ip['AMT_INSTALMENT'], 0)
@@ -558,7 +563,7 @@ class InstallmentsPaymentsData:
 
 
 class POSCashBalanceData:
-    def __init__(self, path_to_data):
+    def __init__(self, path_to_data, sampling = 1):
         self.pos_bal = pd.read_csv(path_to_data + 'POS_CASH_balance.csv')
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "pos_bal"
@@ -566,10 +571,11 @@ class POSCashBalanceData:
         self.filter_conditions = {'all',
                                   'first_1', 'first_5', 'first_12', 
                                   'recent_1', 'recent_6', 'recent_12'}
-
+        self.sampling = sampling
+                
     def preprocess_data(self):
-        if sampling['pos_bal'] < 1:
-            self.pos_bal = self.pos_bal.sample(frac=sampling['pos_bal'])
+        if self.sampling < 1:
+            self.pos_bal = self.pos_bal.sample(frac=self.sampling)
 
         self.pos_bal['no_inst'] = self.pos_bal['CNT_INSTALMENT'] - self.pos_bal["CNT_INSTALMENT_FUTURE"]
         return self
@@ -616,16 +622,17 @@ class POSCashBalanceData:
 
 class CreditCardBalanceData:
 
-    def __init__(self, path_to_data):
+    def __init__(self, path_to_data, sampling = 1):
         self.cc_bal = pd.read_csv(path_to_data + 'credit_card_balance.csv')
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "cc_bal"
         self.agg_map = aggregation_recipes[self.dataset_name]  
         self.filter_conditions = {'all', 'recent_1', 'recent_6', 'recent_12'}
-
+        self.sampling = sampling
+                
     def preprocess_data(self):
-        if sampling['cc_bal'] < 1:
-            self.cc_bal = self.cc_bal.sample(frac=sampling['cc_bal'])
+        if self.sampling < 1:
+            self.cc_bal = self.cc_bal.sample(frac=self.sampling)
 
         self.cc_bal['count_missing'] = self.cc_bal.isnull().sum(axis=1)
         self.cc_bal['bal_to_limit'] = light_divide(self.cc_bal['AMT_BALANCE'] , self.cc_bal['AMT_CREDIT_LIMIT_ACTUAL'])
@@ -673,17 +680,18 @@ class CreditCardBalanceData:
 
 
 class BureauBalanceData:
-    def __init__(self, path_to_data, bureau_id_map):
+    def __init__(self, path_to_data, bureau_id_map, sampling = 1):
         self.buro_balance = pd.read_csv(path_to_data + 'bureau_balance.csv')
         self.bureau_id_map = bureau_id_map
         self.dataset_name = 'buro_bal'
         self.agg_map = aggregation_recipes[self.dataset_name] 
         self.feature_dfs_to_merge_with_main_df = []
         self.time_windows = {None: 'all', -1: 'first1', -7: 'first6', -13: 'first12'}
+        self.sampling = 1
     
     def preprocess_data(self):
-        if sampling['cc_bal'] < 1:
-            self.buro_balance = self.buro_balance.sample(frac=sampling[self.dataset_name])
+        if self.sampling < 1:
+            self.buro_balance = self.buro_balance.sample(frac=self.sampling)
         self.buro_balance = self.buro_balance.merge(self.bureau_id_map, on='SK_ID_BUREAU', how='left')        
         self.buro_balance['SK_ID_CURR'] = self.buro_balance['SK_ID_CURR'].fillna(0).astype(int)
         one_hot = pd.get_dummies(self.buro_balance['STATUS'])
