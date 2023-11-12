@@ -14,8 +14,8 @@ Notes:
 ![data architecture](https://storage.googleapis.com/kaggle-media/competitions/home-credit/home_credit.png)
 
 Main challenges:
-- Nested data structure -> We built a custom data processing class for every data source to handle the specificity of the feature engineering
-- Feature Engineering: heavy aggregations over multiple time windows -> We used parallelization with concurrent.futures to speed up the pipeline
+- Nested data structure -> I built a custom data processing class for every data source to handle the specificity of the feature engineering
+- Feature Engineering: heavy aggregations over multiple time windows -> I used parallelization with concurrent.futures to speed up the pipeline
 
 ## Comments on the architecture
 
