@@ -1,0 +1,12 @@
+{
+  'n_estimators':10000,
+  'learning_rate':0.005,
+  'num_leaves':32,
+  'colsample_bytree':0.1,
+  'subsample':0.90,
+  'max_depth':10,
+  'reg_alpha':0.04,
+  'reg_lambda':20,
+  'min_split_gain':0.02,
+  'min_child_weight':40
+}
