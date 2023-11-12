@@ -174,8 +174,9 @@ aggregation_recipes = {
           }
 }
 
+
 class MainData:
-   def __init__(self, path_to_data, sampling = 1):
+    def __init__(self, path_to_data, sampling = 1):
         self.path_to_data = path_to_data
         self.train_df = None
         self.test_df = None
@@ -190,7 +191,6 @@ class MainData:
         self.train_df = pd.read_csv(self.path_to_data + 'application_train.csv')
         if self.sampling < 1:
             self.train_df = self.train_df.sample(frac=self.sampling)
-        
         self.test_df = pd.read_csv(self.path_to_data + 'application_test.csv')
         self.y = np.array(self.train_df.loc[:, self.target_col]).reshape((self.train_df.shape[0],))
         self.train_df.drop(self.target_col, axis=1, inplace=True)
@@ -324,6 +324,7 @@ class MainData:
         self.load_main_data().set_variable_types().fe_main().append_interest_features().add_categorical_counts() 
         gc.collect()
         return self.full_df, self.target_col, self.y, 
+
 
 class BureauData:
     def __init__(self, path_to_data, sampling):
