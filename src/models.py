@@ -15,7 +15,7 @@ class TrainerLGBM:
     
     Attributes:
         seed (int): Random seed for reproducibility.
-        default_params (dict): Default hyperparameteres for the models.
+        default_params (dict): Default hyperparameters for the models.
     """
     
     def __init__(self, seed: int) -> None:
@@ -25,7 +25,11 @@ class TrainerLGBM:
             seed (int): The seed for random number generation to ensure reproducibility.            
         """
         self.seed = seed
-        self.default_params = {'n_estimators': 100}
+        self.default_params = {'n_estimators': 100,
+                               'learning_rate': 0.1,
+                               'num_leaves': 32,
+                               'max_depth': -1,
+                               'feature_fraction': 1.0}
     
     def set_seed(self, seed: int) -> 'TrainerLGBM':
         """
@@ -59,11 +63,11 @@ class TrainerLGBM:
         Returns:
             lgb.LGBMModel: The initialized LightGBM model.
         """
-        # If no parameters are provided, use the defaults based on the task type
+        # If no parameters are provided, use the defaults
         effective_params = self.default_params.copy()
         if params:
-            effective_params.update(params)  # Override defaults with provided params
-
+            effective_params.update(params) 
+            
         if task_type == 'regression':
             lgb_model = lgb.LGBMRegressor(**effective_params)
         elif task_type == 'classification':
