@@ -9,18 +9,6 @@ import time
 from sklearn import preprocessing
 from sklearn.preprocessing import OneHotEncoder
 
-
-#system settings
-path_to_data = '/kaggle/input/home-credit-default-risk/'
-num_parallel_processes = cpu_count()
-sampling = {'main': 0.05,
-            'bureau': 0.01,
-            'pr_app': 0.01,
-            'inst_pmt': 0.01,
-            'pos_bal': 0.01,
-           'cc_bal': 0.01,
-           'buro_bal': 0.01}
-
 #business settings
 common_sense_interest_threshold = 0.085
 days_in_month = 365/12
@@ -327,7 +315,7 @@ class MainData:
 
 
 class BureauData:
-    def __init__(self, path_to_data, sampling):
+    def __init__(self, path_to_data, num_parallel_processes, sampling):
         self.bureau_df = pd.read_csv(path_to_data + 'bureau.csv')
         self.dataset_name = 'bureau'
         self.agg_map = aggregation_recipes[self.dataset_name]
@@ -335,7 +323,8 @@ class BureauData:
         self.credit_types = ['all', 'Consumer credit', 'Credit card', 'Car loan', 'Mortgage', 'Microloan']
         self.credit_statuses = ['Active', 'Closed']
         self.sampling = sampling
-
+        self.n_proc = num_parallel_processes
+                
     def preprocess_data(self):
         if self.sampling < 1:
             self.bureau_df = self.bureau_df.sample(frac=self.sampling)
@@ -365,7 +354,7 @@ class BureauData:
 
     def compute_features_concurrently(self):
         futures=[]
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             for credit_status in self.credit_statuses: 
                 for credit_type in self.credit_types:
                     future = executor.submit(
@@ -387,7 +376,7 @@ class BureauData:
 
 
 class PreviousApplicationData:
-    def __init__(self, path_to_data, sampling = 1):
+    def __init__(self, path_to_data, num_parallel_processes, sampling = 1):
         self.pr_app = pd.read_csv(path_to_data + 'previous_application.csv')
         self.dataset_name = 'previous_app'
         self.agg_map = aggregation_recipes[self.dataset_name]
@@ -397,6 +386,7 @@ class PreviousApplicationData:
                                   "NAME_CLIENT_TYPE", "NAME_GOODS_CATEGORY","NAME_PRODUCT_TYPE",  "CHANNEL_TYPE", "NAME_SELLER_INDUSTRY", "NAME_YIELD_GROUP", 
                                   "PRODUCT_COMBINATION" ]
         self.sampling = sampling
+        self.n_proc = num_parallel_processes
 
     def preprocess_data(self):
         if self.sampling < 1:
@@ -449,7 +439,7 @@ class PreviousApplicationData:
         return grouped.reset_index()
     
     def compute_active_closed_features_parallel(self):
-        with concurrent.futures.ProcessPoolExecutor(max_workers=num_parallel_processes) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             futures = {
                 executor.submit(self.compute_active_closed_features, True, f'{self.dataset_name}_active'),
                 executor.submit(self.compute_active_closed_features, False, f'{self.dataset_name}_closed')
@@ -470,7 +460,7 @@ class PreviousApplicationData:
 
     def compute_status_features_parallel(self):
         statuses = ["Approved", "Refused"]
-        with concurrent.futures.ProcessPoolExecutor(max_workers=len(statuses)) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             futures = {executor.submit(self.compute_status_features, status) for status in statuses}
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
@@ -486,7 +476,7 @@ class PreviousApplicationData:
 
 
 class InstallmentsPaymentsData:
-    def __init__(self, path_to_data, sampling = 1):
+    def __init__(self, path_to_data, num_parallel_processes, sampling = 1):
         self.ip = pd.read_csv(path_to_data + 'installments_payments.csv').sort_values(['SK_ID_PREV', "DAYS_INSTALMENT"])
         self.feature_dfs_to_merge_with_main_df = []
         self.days_in_month = days_in_month  
@@ -495,6 +485,7 @@ class InstallmentsPaymentsData:
         self.lb_window_prefix_map = {-np.inf: 'all', -720: '720', -360: '360', -90: '90', -30: '30'}  
         self.version_filters = {None:'all', '0': '0' , '1' : '1', '>=2': '2andmore', '<3': 'first_2', '<6': 'first_5'} 
         self.sampling = sampling
+        self.n_proc = num_parallel_processes
                 
     def preprocess_data(self):
         if self.sampling < 1:
@@ -539,7 +530,7 @@ class InstallmentsPaymentsData:
 
     def compute_features_concurrently(self):
         futures = []
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             for lookback_window, lookback_window_prefix in self.lb_window_prefix_map.items():
                 for version_filter, version_prefix in self.version_filters.items():
                     future = executor.submit(
@@ -564,7 +555,7 @@ class InstallmentsPaymentsData:
 
 
 class POSCashBalanceData:
-    def __init__(self, path_to_data, sampling = 1):
+    def __init__(self, path_to_data, num_parallel_processes, sampling = 1):
         self.pos_bal = pd.read_csv(path_to_data + 'POS_CASH_balance.csv')
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "pos_bal"
@@ -573,6 +564,7 @@ class POSCashBalanceData:
                                   'first_1', 'first_5', 'first_12', 
                                   'recent_1', 'recent_6', 'recent_12'}
         self.sampling = sampling
+        self.n_proc = num_parallel_processes
                 
     def preprocess_data(self):
         if self.sampling < 1:
@@ -587,7 +579,7 @@ class POSCashBalanceData:
         return stats.reset_index()
 
     def compute_features_concurrently(self, filter_conditions):
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             futures = []
             for condition in self.filter_conditions:
                 if condition == 'all':
@@ -623,13 +615,14 @@ class POSCashBalanceData:
 
 class CreditCardBalanceData:
 
-    def __init__(self, path_to_data, sampling = 1):
+    def __init__(self, path_to_data, num_parallel_processes, sampling = 1):
         self.cc_bal = pd.read_csv(path_to_data + 'credit_card_balance.csv')
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "cc_bal"
         self.agg_map = aggregation_recipes[self.dataset_name]  
         self.filter_conditions = {'all', 'recent_1', 'recent_6', 'recent_12'}
         self.sampling = sampling
+        self.n_proc = num_parallel_processes
                 
     def preprocess_data(self):
         if self.sampling < 1:
@@ -653,7 +646,7 @@ class CreditCardBalanceData:
         return stats.reset_index()
 
     def compute_features_concurrently(self):
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             futures = []
             for condition in self.filter_conditions:
                 filtered = self.cc_bal
@@ -681,7 +674,7 @@ class CreditCardBalanceData:
 
 
 class BureauBalanceData:
-    def __init__(self, path_to_data, bureau_id_map, sampling = 1):
+    def __init__(self, path_to_data, bureau_id_map, num_parallel_processes, sampling = 1):
         self.buro_balance = pd.read_csv(path_to_data + 'bureau_balance.csv')
         self.bureau_id_map = bureau_id_map
         self.dataset_name = 'buro_bal'
@@ -689,6 +682,7 @@ class BureauBalanceData:
         self.feature_dfs_to_merge_with_main_df = []
         self.time_windows = {None: 'all', -1: 'first1', -7: 'first6', -13: 'first12'}
         self.sampling = 1
+        self.n_proc = num_parallel_processes
     
     def preprocess_data(self):
         if self.sampling < 1:
@@ -706,7 +700,7 @@ class BureauBalanceData:
         return stats.reset_index()
 
     def compute_features_concurrently(self):
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=self.n_proc) as executor:
             futures = []
             for window, prefix in self.time_windows.items():
                 filtered = self.buro_balance if window is None else self.buro_balance[self.buro_balance['MONTHS_BALANCE'] > window]                
