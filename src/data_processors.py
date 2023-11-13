@@ -311,7 +311,7 @@ class MainData:
     def process(self):
         self.load_main_data().set_variable_types().fe_main().append_interest_features().add_categorical_counts() 
         gc.collect()
-        return self.full_df, self.target_col, self.y, 
+        return self.full_df, self.target_col, self.y, self.categorical_variables
 
 
 class BureauData:
