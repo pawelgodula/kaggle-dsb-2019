@@ -3,6 +3,16 @@
 This repository contains the main elements of my ML pipeline to achieve 5th place out of 7176 teams in the [Kaggle Homecredit Competition](https://www.kaggle.com/competitions/home-credit-default-risk).
 I participated in this competition in a team with my dear friends [Alvor](https://www.kaggle.com/allvor) and [Mike](https://www.kaggle.com/meykds). Their contributions are not covered in this repo.
 
+## Instructions
+### Download the repo
+`git clone https://github.com/pawelgodula/kagglehomecredit`
+### Install requirements
+`pip install requirements.txt`
+### Data
+Make sure [the competition data](https://www.kaggle.com/competitions/home-credit-default-risk/data) is in the `path-to-data` folder
+### Running the main pipeline
+`python kagglehomecredit/src/main_pipeline.py --path-to-data --path
+
 ## Solution Architecture
 ![Homecredit Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_architecture.png)
 Notes:
