@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Optional, Dict, Any
+from typing import List, Tuple, Set, Optional, Dict, Any, Bool
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold
@@ -211,6 +211,9 @@ class TrainerLGBM:
             })
             zero_importance_features = feat_imp_df[feat_imp_df['Value'] == 0]['Feature'].tolist()
             unimportant_features.update(zero_importance_features)
+        with open('unimportant_features.txt', 'w') as file:
+            for item in unimportant_features:
+                file.write(item)
         return list(unimportant_features)
     
     def optimize_hyperparameters(self, full_df: pd.DataFrame, task_type: str, features: List[str], target: str, eval_metric: str, n_fold: int, n_trials: int, timeout: Optional[int], categoricals: List[str] = None) -> dict:
