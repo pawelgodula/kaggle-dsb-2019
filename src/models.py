@@ -186,7 +186,7 @@ class TrainerLGBM:
             print(f'Overall {eval_metric}', val_score)  
         return models, val_preds, val_score
     
-    def find_unimportant_features(self, full_df: pd.DataFrame, task_type: str, params: dict, features: List[str], target: str, eval_metric: str, n_fold: int, categoricals: List[str] = None) -> Set[str]:
+    def find_unimportant_features(self, full_df: pd.DataFrame, task_type: str, params: dict, features: List[str], target: str, eval_metric: str, n_fold: int, categoricals: List[str] = None) -> List[str]:
         """
         Find features that have zero importance in at least one fold of the cross-validation.
         Args:
@@ -232,8 +232,6 @@ class TrainerLGBM:
         """
         def objective(trial):
             params = {
-                'n_estimators': trial.suggest_int('n_estimators', 50, 1000),
-                'learning_rate': trial.suggest_float('learning_rate', 1e-4, 0.1, log = True),
                 'num_leaves': trial.suggest_int('num_leaves', 20, 300),
                 'max_depth': trial.suggest_int('max_depth', 3, 12),
                 'min_child_samples': trial.suggest_int('min_child_samples', 5, 100),
@@ -243,9 +241,32 @@ class TrainerLGBM:
                 'reg_lambda': trial.suggest_float('reg_lambda', 1e-8, 10.0, log = True),
             }
             _,_, val_score = self.fit_kfold(full_df, task_type, params, features, target, eval_metric, n_fold, False, categoricals)
-            return val_score
-
+            return val_score            
+        
         study = optuna.create_study(direction='maximize' if eval_metric in ['accuracy', 'f1', 'auc'] else 'minimize')
         study.optimize(objective, n_trials=n_trials, timeout=timeout)
-
+        
         return study.best_params
+
+    def optimize_features_params(self, full_df: pd.DataFrame, task_type: str, params: dict, features: List[str], target: str, eval_metric: str, n_fold: int, n_trials: int, timeout: Optional[int], categoricals: List[str] = None) -> Tuple[List, dict]:
+        """
+        Finds unimportant features and searches for the best hyperparameters sequentially
+        Args:
+            full_df (pd.DataFrame): Full dataset containing features and target.
+            task_type (str): Type of task ('classification' or 'regression').
+            features (List[str]): List of feature names.
+            target (str): Target column name.
+            eval_metric (str): Evaluation metric for optimization.
+            n_fold (int): Number of folds for K-fold cross-validation.
+            n_trials (int): Number of trials for optimization.
+            timeout (int): Time in seconds to timeout the optimization.
+            categoricals (List[str], optional): List of categorical feature names.
+
+        Returns:
+            Tuple[List, dict]: A tuple containing unimportant features and the best hyperparameters found
+        """
+        unimportant_features = self.find_unimportant_features(full_df, task_type, params, features, target, eval_metric, n_fold, categoricals)
+        full_df.drop(columns=unimportant_features, inplace = True)
+        best_params = self.optimize_hyperparameters(full_df, task_type, features, target, eval_metric, n_fold, n_trials, timeout, categoricals)
+            
+        return unimportant_features, best_params
