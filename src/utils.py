@@ -1,7 +1,7 @@
 import json
 from typing import List, Dict, Tuple
 
-def load_features_and_params(path_to_opt_settings: str) -> Tuple[List[str], Dict] :
+def load_features_and_params(path_to_opt_settings: str) -> Tuple[List[str], Dict]:
     """
     Loads the list of unimportant features and optimal LightGBM parameters from specified files.
     Parameters:
