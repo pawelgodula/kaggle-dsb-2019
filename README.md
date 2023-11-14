@@ -12,7 +12,6 @@ I participated in this competition in a team with my dear friends [Alvor](https:
 Make sure [the competition data](https://www.kaggle.com/competitions/home-credit-default-risk/data) is in the proper `path-to-data` folder
 ### 4. Run the main pipeline
 `python main_pipeline.py python main_pipeline.py --path_to_data "/path/to/data/folder" --path_to_opt_settings "/path/to/opt/settings/folder"`
-The optimal settings will be downloaded with this repo, make sure to provide the correct path
 
 ## Solution Architecture
 ![Homecredit Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_architecture.png)
