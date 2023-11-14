@@ -8,76 +8,11 @@ import gc
 import time
 from sklearn import preprocessing
 from sklearn.preprocessing import OneHotEncoder
+from utils import dispersion, share_na, light_divide, reduce_column_names
 
 ### business settings
 common_sense_interest_threshold = 0.085
 days_in_month = 365/12
-
-def dispersion(x: np.ndarray) -> float:
-    """
-    Calculate the dispersion of an array, defined as the difference between its maximum and minimum values,
-    while ignoring NaN values.
-
-    Parameters:
-    x (np.ndarray): A NumPy array.
-
-    Returns:
-    float: The dispersion of the array. Returns NaN if the array is empty or contains only NaN values.
-    """
-    if np.all(np.isnan(x)) or len(x) == 0:
-        return np.nan
-    return np.nanmax(x) - np.nanmin(x)
-
-def share_na(x: pd.Series) -> float:
-    """
-    Calculate the proportion of NaN values in a pandas Series.
-
-    Parameters:
-    x (pd.Series): A pandas Series.
-
-    Returns:
-    float: The proportion of NaN values in the Series.
-    """
-    return sum(x.isnull()) / len(x)
-    
-def light_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
-    """
-    Divide two arrays element-wise and return the result as a float32 array.
-
-    Parameters:
-    numerator (np.ndarray): The numerator array.
-    denominator (np.ndarray): The denominator array.
-
-    Returns:
-    np.ndarray: The element-wise division of the two arrays, cast to float32.
-    """
-    return np.divide(numerator, denominator).astype(np.float32)
-
-def reduce_column_names(multi_level_df: pd.DataFrame, prefix: str) -> list:
-    """
-    Reduces the column names in a multi-level pandas DataFrame by concatenating all levels with a prefix.
-    
-    Parameters:
-    multi_level_df (pd.DataFrame): A multi-level pandas DataFrame.
-    prefix (str): A prefix to prepend to each column name.
-
-    Returns:
-    list: A list of new column names where each column name is a concatenation of the prefix and the original multi-level names.
-
-    Raises:
-    ValueError: If the input is not a multi-level pandas DataFrame.
-    """
-    if not isinstance(multi_level_df, pd.DataFrame):
-        raise ValueError("The first argument must be a pandas DataFrame.")
-
-    if not isinstance(multi_level_df.columns, pd.MultiIndex):
-        raise ValueError("The DataFrame does not have multi-level columns.")
-
-    new_columns = [
-        f"{prefix}_{'_'.join(map(str, levels))}".replace(' ', '_') for levels in multi_level_df.columns
-    ]
-
-    return new_columns
     
 aggregation_recipes = {
   
