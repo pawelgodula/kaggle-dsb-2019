@@ -250,7 +250,7 @@ class TrainerLGBM:
 
     def optimize_features_params(self, full_df: pd.DataFrame, task_type: str, params: dict, features: List[str], target: str, eval_metric: str, n_fold: int, n_trials: int, timeout: Optional[int], categoricals: List[str] = None) -> Tuple[List, dict]:
         """
-        Finds unimportant features and searches for the best hyperparameters sequentially
+        Find unimportant features and search for the best hyperparameters sequentially
         Args:
             full_df (pd.DataFrame): Full dataset containing features and target.
             task_type (str): Type of task ('classification' or 'regression').
