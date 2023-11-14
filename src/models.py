@@ -118,7 +118,24 @@ class TrainerLGBM:
             return model.predict_proba(data)[:, 1]
         else:
             raise ValueError(f"Unsupported task type: {task_type}")
-    
+            
+    def build_submission(self, models: List[lgb.LGBMModel], data: pd.DataFrame, id: List, task_type: str) -> pd.DataFrame:
+        """
+        Build a submission DataFrame by averaging predictions from multiple LightGBM models.    
+        Args:
+            models (List[lgb.LGBMModel]): A list of trained LightGBM models.
+            data (pd.DataFrame): The data on which to make predictions.
+            id (List): A list of identifiers corresponding to the data records.
+            task_type (str): The type of task ('classification' or 'regression').
+        Returns:
+            pd.DataFrame: A DataFrame containing the identifiers and averaged predictions.
+        """
+        sub_preds = []
+        for model in models:
+            sub_preds.append(self.predict(model, data, task_type))
+        sub_preds = np.mean(sub_preds, axis=0)
+        return pd.DataFrame({'id': id, 'preds': sub_preds})
+        
     def plot_importances(self, model: lgb.LGBMModel, n_top_feats: int = 25, figsize: Tuple[int, int] = (10, 5)) -> None:
         """
         Plot the feature importances of the trained model.
