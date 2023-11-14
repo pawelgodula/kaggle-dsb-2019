@@ -77,14 +77,7 @@ def main_pipeline(args):
     del buro_bal_processor, buro_bal_features; gc.collect()
 
     ### Feature selection & hyperparameter optimization
-  
-    def load_features_and_params(path_to_opt_settings):
-        with open(f'{path_to_opt_settings}/unimportant_features.txt', 'r') as file:
-            unimportant_features = [line.strip() for line in file.readlines()]
-        with open(f'{path_to_opt_settings}/optimal_lgbm_params.json', 'r') as file:
-             optimal_lgb_params = json.load(file)
-        return unimportant_features, optimal_lgb_params
-
+    
     if use_precomputed_optimal_settings:
         unimportant_features, optimal_lgb_params = load_features_and_params(path_to_opt_settings)
     else:
