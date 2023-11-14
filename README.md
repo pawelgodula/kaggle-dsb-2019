@@ -15,7 +15,7 @@ Make sure [the competition data](https://www.kaggle.com/competitions/home-credit
 
 Example:
 
-`!python /kaggle/working/kagglehomecredit/src/main_pipeline.py --path_to_data "/kaggle/input/home-credit-default-risk/" --path_to_opt_settings "/kaggle/working/kagglehomecredit/src/opt_settings/"`
+`python /kaggle/working/kagglehomecredit/src/main_pipeline.py --path_to_data "/kaggle/input/home-credit-default-risk/" --path_to_opt_settings "/kaggle/working/kagglehomecredit/src/opt_settings/"`
 
 ## Solution Architecture
 ![Homecredit Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_architecture.png)
