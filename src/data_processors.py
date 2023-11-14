@@ -39,7 +39,7 @@ def reduce_column_names(multi_level_df, prefix):
         raise ValueError("The DataFrame does not have multi-level columns.")
 
     new_columns = [
-        f"{prefix}_{'_'.join(map(str, levels))}" for levels in multi_level_df.columns
+        f"{prefix}_{'_'.join(map(str, levels))}".replace(' ', '_') for levels in multi_level_df.columns
     ]
 
     return new_columns
