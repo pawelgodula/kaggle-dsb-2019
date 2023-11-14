@@ -9,28 +9,63 @@ import time
 from sklearn import preprocessing
 from sklearn.preprocessing import OneHotEncoder
 
-#business settings
+### business settings
 common_sense_interest_threshold = 0.085
 days_in_month = 365/12
 
-def dispersion(x):
+def dispersion(x: np.ndarray) -> float:
     """
-    returns the difference between max and min value ignoring nans
+    Calculate the dispersion of an array, defined as the difference between its maximum and minimum values,
+    while ignoring NaN values.
+
+    Parameters:
+    x (np.ndarray): A NumPy array.
+
+    Returns:
+    float: The dispersion of the array. Returns NaN if the array is empty or contains only NaN values.
     """
     if np.all(np.isnan(x)) or len(x) == 0:
         return np.nan
     return np.nanmax(x) - np.nanmin(x)
 
-def share_na(x):
-    return(sum(x.isnull()) / len(x))
+def share_na(x: pd.Series) -> float:
+    """
+    Calculate the proportion of NaN values in a pandas Series.
 
-def light_divide(numerator, denominator):
+    Parameters:
+    x (pd.Series): A pandas Series.
+
+    Returns:
+    float: The proportion of NaN values in the Series.
+    """
+    return sum(x.isnull()) / len(x)
+    
+def light_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
+    """
+    Divide two arrays element-wise and return the result as a float32 array.
+
+    Parameters:
+    numerator (np.ndarray): The numerator array.
+    denominator (np.ndarray): The denominator array.
+
+    Returns:
+    np.ndarray: The element-wise division of the two arrays, cast to float32.
+    """
     return np.divide(numerator, denominator).astype(np.float32)
 
-def reduce_column_names(multi_level_df, prefix):
+def reduce_column_names(multi_level_df: pd.DataFrame, prefix: str) -> list:
     """
     Reduces the column names in a multi-level pandas DataFrame by concatenating all levels with a prefix.
     
+    Parameters:
+    multi_level_df (pd.DataFrame): A multi-level pandas DataFrame.
+    prefix (str): A prefix to prepend to each column name.
+
+    Returns:
+    list: A list of new column names where each column name is a concatenation of the prefix and the original multi-level names.
+
+    Raises:
+    ValueError: If the input is not a multi-level pandas DataFrame.
     """
     if not isinstance(multi_level_df, pd.DataFrame):
         raise ValueError("The first argument must be a pandas DataFrame.")
@@ -43,7 +78,7 @@ def reduce_column_names(multi_level_df, prefix):
     ]
 
     return new_columns
-
+    
 aggregation_recipes = {
   
     'bureau' :
@@ -76,37 +111,33 @@ aggregation_recipes = {
             },
     'previous_app' : 
             {
-            'AMT_ANNUITY': ['sum','mean', "max", 'min', dispersion, share_na],
-                       'AMT_APPLICATION': ['sum','mean', "max", 'min', dispersion, share_na],
-           'AMT_CREDIT': ['sum','mean', "max", 'min', dispersion, share_na],
-           'AMT_DOWN_PAYMENT': ['sum','mean', "max", 'min', dispersion, share_na],           
-           'AMT_GOODS_PRICE': ['sum','mean', "max", 'min', dispersion, share_na],
-           'HOUR_APPR_PROCESS_START': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           'DAYS_DECISION': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           'CNT_PAYMENT': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           'NFLAG_INSURED_ON_APPROVAL': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           
-           "DAYS_FIRST_DRAWING" : ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "DAYS_FIRST_DUE": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "DAYS_LAST_DUE_1ST_VERSION": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "DAYS_LAST_DUE": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "DAYS_TERMINATION": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           
-           'RATE_DOWN_PAYMENT': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           'RATE_INTEREST_PRIMARY': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           'RATE_INTEREST_PRIVILEGED': ['sum', 'mean', "max", 'min', dispersion, share_na],
-                    
+            'AMT_ANNUITY': ['sum','mean', "max", 'min', dispersion, share_na], 'AMT_APPLICATION': ['sum','mean', "max", 'min', dispersion, share_na],
+            'AMT_CREDIT': ['sum','mean', "max", 'min', dispersion, share_na],
+            'AMT_DOWN_PAYMENT': ['sum','mean', "max", 'min', dispersion, share_na],           
+            'AMT_GOODS_PRICE': ['sum','mean', "max", 'min', dispersion, share_na],
+            'HOUR_APPR_PROCESS_START': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            'DAYS_DECISION': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            'CNT_PAYMENT': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            'NFLAG_INSURED_ON_APPROVAL': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "DAYS_FIRST_DRAWING" : ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "DAYS_FIRST_DUE": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "DAYS_LAST_DUE_1ST_VERSION": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "DAYS_LAST_DUE": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "DAYS_TERMINATION": ['sum', 'mean', "max", 'min', dispersion, share_na],           
+            'RATE_DOWN_PAYMENT': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            'RATE_INTEREST_PRIMARY': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            'RATE_INTEREST_PRIVILEGED': ['sum', 'mean', "max", 'min', dispersion, share_na],
             'active': ['sum','mean'],
             'credit_to_app': ['sum','mean', "max", 'min', dispersion, share_na],
             'credit_to_good': ['sum','mean', "max", 'min', dispersion, share_na],
             'annuity_to_good': ['sum','mean', "max", 'min', dispersion, share_na],
             'annuity_to_credit': ['sum','mean', "max", 'min', dispersion, share_na],
             'down_to_good': ['sum','mean', "max", 'min', dispersion, share_na],
-           'missing_info': ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "days_diff_last_first": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "credit_duration": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "credit_duration2": ['sum', 'mean', "max", 'min', dispersion, share_na],
-           "days_diff_last_last" : ['sum', 'mean', "max", 'min', dispersion, share_na]           },
+            'missing_info': ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "days_diff_last_first": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "credit_duration": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "credit_duration2": ['sum', 'mean', "max", 'min', dispersion, share_na],
+            "days_diff_last_last" : ['sum', 'mean', "max", 'min', dispersion, share_na]           },
     
     'installments_payments' : {'delay': ['count','sum','mean', "max", 'min', dispersion],
            'lacking_money': ['sum','mean', "max", 'min', dispersion],
@@ -116,15 +147,17 @@ aggregation_recipes = {
           'lacking_money_ratio': ['sum','mean', "max", 'min', dispersion],
            "surplus_money_ratio": ['sum','mean', "max", 'min', dispersion]},
     
-    'pos_bal': {'MONTHS_BALANCE': ['count','sum','mean', "max", 'min', dispersion],
-           'CNT_INSTALMENT': ['sum','mean', "max", 'min', dispersion],
+    'pos_bal': {
+          'MONTHS_BALANCE': ['count','sum','mean', "max", 'min', dispersion],
+          'CNT_INSTALMENT': ['sum','mean', "max", 'min', dispersion],
           "CNT_INSTALMENT_FUTURE": ['sum','mean', "max", 'min', dispersion],
           'SK_DPD': ['sum','mean', "max", 'min', dispersion], 
           'SK_DPD_DEF': ['sum','mean', "max", 'min', dispersion],
            "no_inst" : ['sum','mean', "max", 'min', dispersion]
           },
     
-    'cc_bal' : {'count_missing': ['count','sum','mean', "max", 'min', dispersion, share_na],
+    'cc_bal' : {
+        'count_missing': ['count','sum','mean', "max", 'min', dispersion, share_na],
            'bal_to_limit': ['sum','mean', "max", 'min', dispersion, share_na],
           "draw_atm_to_limit": ['sum','mean', "max", 'min', dispersion, share_na],
           'draw_pos_to_limit': ['sum','mean', "max", 'min', dispersion, share_na], 
@@ -152,13 +185,13 @@ aggregation_recipes = {
            "SK_DPD_DEF": ['sum','mean', "max", 'min', dispersion, share_na]
           },
     'buro_bal': {'0_col': ['count','sum','mean', "max", 'min'],
-           '1_col': ['sum','mean', "max", 'min'],
+          '1_col': ['sum','mean', "max", 'min'],
           "2_col": ['sum','mean', "max", 'min'],
           '3_col': ['sum','mean', "max", 'min'], 
           '4_col': ['sum','mean', "max", 'min'],
-           "5_col" : ['sum','mean', "max", 'min'],
-           "C_col" : ['sum','mean', "max", 'min'],
-           "X_col" : ['sum','mean', "max", 'min']           
+          "5_col" : ['sum','mean', "max", 'min'],
+          "C_col" : ['sum','mean', "max", 'min'],
+          "X_col" : ['sum','mean', "max", 'min']           
           }
 }
 
