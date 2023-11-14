@@ -20,11 +20,16 @@ I participated in this competition in a team with my dear friends [Alvor](https:
 Make sure [the competition data](https://www.kaggle.com/competitions/home-credit-default-risk/data) is in the proper `path/to/data` folder
 
 ### 4. Run the main pipeline
+
 `python main_pipeline.py python main_pipeline.py --path_to_data "/path/to/data/folder" --path_to_opt_settings "/path/to/opt/settings/folder"`
 
 Example (from running on a Kaggle notebook):
 
 `!python /kaggle/working/kagglehomecredit/src/main_pipeline.py --path_to_data "/kaggle/input/home-credit-default-risk/" --path_to_opt_settings "/kaggle/working/kagglehomecredit/src/opt_settings/"`
+
+### 5. Requirements
+
+128GB RAM is required in order to run the main pipeline without sampling. 
 
 ## Solution Architecture
 
