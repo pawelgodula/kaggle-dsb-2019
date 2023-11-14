@@ -24,7 +24,7 @@ Example (from running on a Kaggle notebook):
 ![Homecredit Architecture](https://github.com/pawelgodula/kaggle-homecredit/blob/main/images/homecredit_architecture.png)
 Notes:
 - The code in this repo covers steps colored in grey.
-- In the comments section below I outline key elements of the architecture. In retrospect, our key mistake was that we used a weighted average of 3 variations of a single model, but the differences between them were so small, that the weighted average scored the same as the single model. We put all of our effort into feature engineering. We consider it a major omission, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level stacking with ~90 base models. 
+- In the comments section below I outline key elements of the architecture. 
 
 ## Data Structure
 
@@ -35,8 +35,6 @@ Main challenges:
 - Feature Engineering: heavy aggregations over multiple time windows -> I used parallelization with concurrent.futures to speed up the pipeline
 
 ## Comments on the architecture
-
-Our best single model scored 0.80550 on Private LB, which would be enough for 3rd place. Unfortunately, it was rather impossible to select it among our solutions- it had neither the best CV (0.8064) nor LB (0.8150). Our best submission was a weighted average of 3 models (0.25, 0.25, 0.5), but scored the same on LB as one of the models in the mix. Maybe the fact that we didn’t pay much attention to stacking (and that stacking gave us no improvement, and was much worse than the best single model) was our biggest mistake. We invested everything into feature engineering because the data was so interesting to analyze.
 
 There are a few main ideas that we think we have done differently vs. others, and which gave us the lead on public LB.
 
@@ -125,6 +123,10 @@ Interest rate prediction gave us a 0.002 improvement on CV/ 0.004 improvement on
 ### 4. Feature selection
 
 We did a lot of hand-crafted features (around 8.000), out of which we selected around 3.000 using [this mechanism](https://www.kaggle.com/code/ogrellier/feature-selection-with-null-importances). In this repo, it is substituted with a simple mechanism that also works well: if a feature has zero importance in at least one of the folds (on a model trained with `feature_fraction = 1.0`), it can be removed.
+
+## Lessons learned
+
+In retrospect, our key mistake was that we used a weighted average of 3 variations of a single model, but the differences between them were so small, that the weighted average scored the same as the single model. We put all of our effort into feature engineering. We consider it a major omission, which led to a drop from #1 on Public LB to #5 on Private LB. [The winning team](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821) used 3-level stacking with ~90 base models. 
 
 ## Final remarks
 - For a full discussion of the solution please see [the Kaggle forum](https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64625)
