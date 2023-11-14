@@ -211,7 +211,7 @@ class TrainerLGBM:
             })
             zero_importance_features = feat_imp_df[feat_imp_df['Value'] == 0]['Feature'].tolist()
             unimportant_features.update(zero_importance_features)
-        return unimportant_features
+        return list(unimportant_features)
     
     def optimize_hyperparameters(self, full_df: pd.DataFrame, task_type: str, features: List[str], target: str, eval_metric: str, n_fold: int, n_trials: int, timeout: Optional[int], categoricals: List[str] = None) -> dict:
         """
