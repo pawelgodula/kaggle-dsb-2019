@@ -1,6 +1,6 @@
-from kagglehomecredit.src.models import TrainerLGBM
-from kagglehomecredit.src.data_processors import MainData, BureauData, PreviousApplicationData, InstallmentsPaymentsData, POSCashBalanceData, CreditCardBalanceData, BureauBalanceData
-from kagglehomecredit.src.utils import load_features_and_params
+from models import TrainerLGBM
+from data_processors import MainData, BureauData, PreviousApplicationData, InstallmentsPaymentsData, POSCashBalanceData, CreditCardBalanceData, BureauBalanceData
+from utils import load_features_and_params
 import gc
 import json
 
