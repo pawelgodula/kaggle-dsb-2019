@@ -11,8 +11,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module="optuna.*")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Home Credit Default Risk Prediction")    
-    parser.add_argument('--path_to_data', type=str, default='/kaggle/input/home-credit-default-risk/', help='Path to the data directory')
-    parser.add_argument('--path_to_opt_settings', type=str, default='/kaggle/working/kagglehomecredit/src/opt_settings', help='Path to the optimization settings directory')
+    parser.add_argument('--path_to_data', required=True, type=str, default='/kaggle/input/home-credit-default-risk/', help='Path to the data directory')
+    parser.add_argument('--path_to_opt_settings', required=True, type=str, default='/kaggle/working/kagglehomecredit/src/opt_settings', help='Path to the optimization settings directory')
     parser.add_argument('--sample_rate', type=float, default=0.01, help='Sample rate for data processing')
     parser.add_argument('--num_parallel_processes', type=int, default=4, help='Number of parallel processes')
     parser.add_argument('--use_precomputed_optimal_settings', type=bool, default=True, help='Whether to use precomputed optimal settings')
