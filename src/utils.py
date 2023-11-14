@@ -5,8 +5,7 @@ def load_features_and_params(path_to_opt_settings: str) -> Tuple[List[str], Dict
     """
     Loads the list of unimportant features and optimal LightGBM parameters from specified files.
     Parameters:
-    - path_to_opt_settings (str): The path to the directory containing the 'unimportant_features.txt' and 
-                                'optimal_lgbm_params.json' files.
+    - path_to_opt_settings (str): The path to the directory containing the pre-computed 'unimportant_features.txt' and optimal_lgbm_params.json' files.
     Returns:
     tuple: A tuple containing two elements:
         - unimportant_features (list of str): A list of feature names considered unimportant.
