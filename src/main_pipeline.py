@@ -81,7 +81,7 @@ def main_pipeline(args):
 
     ### Feature engineering
 
-    main_data_processor = MainData(path_to_data, sampling=0.1)
+    main_data_processor = MainData(path_to_data, sampling=1.0)
     df, target_col, y, categorical_feats = main_data_processor.process()
     del main_data_processor
     gc.collect()
