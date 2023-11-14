@@ -6,8 +6,10 @@ I participated in this competition in a team with my dear friends [Alvor](https:
 ## Instructions
 ### 1. Download the repo
 `git clone https://github.com/pawelgodula/kagglehomecredit`
-### 2. Install the requirements (no need if working on Kaggle docker)
+### 2. Install the requirements
 `pip install requirements.txt`
+
+(no need if working on a Kaggle Notebook or a Kaggle Python docker image)
 ### 3. Get the data
 Make sure [the competition data](https://www.kaggle.com/competitions/home-credit-default-risk/data) is in the proper `path/to/data` folder
 ### 4. Run the main pipeline
