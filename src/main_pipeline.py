@@ -47,35 +47,35 @@ def main_pipeline(args):
         df = df.merge(feat_df, on="SK_ID_CURR", how='left')
     del bureau_processor, bureau_features; gc.collect()
 
-    # prev_app_processor = PreviousApplicationData(path_to_data, num_parallel_processes, sample_rate)
-    # prev_credit_app_features = prev_app_processor.process()
-    # for feat_df in prev_credit_app_features:
-    #     df = df.merge(feat_df, on="SK_ID_CURR", how='left')
-    # del prev_app_processor, prev_credit_app_features; gc.collect()
+    prev_app_processor = PreviousApplicationData(path_to_data, num_parallel_processes, sample_rate)
+    prev_credit_app_features = prev_app_processor.process()
+    for feat_df in prev_credit_app_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how='left')
+    del prev_app_processor, prev_credit_app_features; gc.collect()
 
-    # inst_pmt_processor = InstallmentsPaymentsData(path_to_data, num_parallel_processes, sample_rate)
-    # inst_pmt_features = inst_pmt_processor.process()
-    # for feat_df in inst_pmt_features:
-    #     df = df.merge(feat_df, on="SK_ID_CURR", how='left')
-    # del inst_pmt_processor, inst_pmt_features; gc.collect()
+    inst_pmt_processor = InstallmentsPaymentsData(path_to_data, num_parallel_processes, sample_rate)
+    inst_pmt_features = inst_pmt_processor.process()
+    for feat_df in inst_pmt_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how='left')
+    del inst_pmt_processor, inst_pmt_features; gc.collect()
 
-    # pos_bal_processor = POSCashBalanceData(path_to_data, num_parallel_processes, sample_rate)
-    # pos_bal_features = pos_bal_processor.process()
-    # for feat_df in pos_bal_features:
-    #     df = df.merge(feat_df, on="SK_ID_CURR", how='left')    
-    # del pos_bal_processor, pos_bal_features; gc.collect()
+    pos_bal_processor = POSCashBalanceData(path_to_data, num_parallel_processes, sample_rate)
+    pos_bal_features = pos_bal_processor.process()
+    for feat_df in pos_bal_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how='left')    
+    del pos_bal_processor, pos_bal_features; gc.collect()
 
-    # cc_bal_processor = CreditCardBalanceData(path_to_data, num_parallel_processes, sample_rate)
-    # cc_bal_features = cc_bal_processor.process()
-    # for feat_df in cc_bal_features:
-    #     df = df.merge(feat_df, on="SK_ID_CURR", how='left')
-    # del cc_bal_processor, cc_bal_features; gc.collect()
+    cc_bal_processor = CreditCardBalanceData(path_to_data, num_parallel_processes, sample_rate)
+    cc_bal_features = cc_bal_processor.process()
+    for feat_df in cc_bal_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how='left')
+    del cc_bal_processor, cc_bal_features; gc.collect()
 
-    # buro_bal_processor = BureauBalanceData(path_to_data, bureau_id_map, num_parallel_processes, sample_rate)
-    # buro_bal_features = buro_bal_processor.process()
-    # for feat_df in buro_bal_features:
-    #     df = df.merge(feat_df, on="SK_ID_CURR", how='left')
-    # del buro_bal_processor, buro_bal_features; gc.collect()
+    buro_bal_processor = BureauBalanceData(path_to_data, bureau_id_map, num_parallel_processes, sample_rate)
+    buro_bal_features = buro_bal_processor.process()
+    for feat_df in buro_bal_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how='left')
+    del buro_bal_processor, buro_bal_features; gc.collect()
 
     ### Feature selection & hyperparameter optimization
     
@@ -90,8 +90,6 @@ def main_pipeline(args):
     df.drop(columns=unimportant_features, inplace=True)
 
     ### Train the main model
-
-    optimal_lgb_params = {'n_estimators': 100}
 
     full_df = df.iloc[:y.shape[0],:].copy()
     full_df['TARGET']=y
