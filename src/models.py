@@ -122,7 +122,7 @@ class TrainerLGBM:
         else:
             raise ValueError(f"Unsupported task type: {task_type}")
             
-    def build_submission(self, models: List[lgb.LGBMModel], data: pd.DataFrame, id: List, task_type: str) -> pd.DataFrame:
+    def build_submission(self, models: List[lgb.LGBMModel], data: pd.DataFrame, id: List, task_type: str, categoricals: List[str] = None) -> pd.DataFrame:
         """
         Build a submission DataFrame by averaging predictions from multiple LightGBM models.    
         Args:
@@ -130,9 +130,12 @@ class TrainerLGBM:
             data (pd.DataFrame): The data on which to make predictions.
             id (List): A list of identifiers corresponding to the data records.
             task_type (str): The type of task ('classification' or 'regression').
+            categoricals (List[str], optional): List of categorical feature names.
         Returns:
             pd.DataFrame: A DataFrame containing the identifiers and averaged predictions.
         """
+        if categoricals:
+            data = self.validate_categoricals(data, categoricals)
         sub_preds = []
         for model in models:
             sub_preds.append(self.predict(model, data, task_type))
