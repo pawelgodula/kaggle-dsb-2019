@@ -102,16 +102,19 @@ class TrainerLGBM:
         )
         return model
     
-    def predict(self, model: lgb.LGBMModel, data: pd.DataFrame, task_type: str) -> np.ndarray:
+    def predict(self, model: lgb.LGBMModel, data: pd.DataFrame, task_type: str, categoricals: List[str] = None) -> np.ndarray:
         """
         Make predictions using the trained LightGBM model.
         Args:
             model (lgb.LGBMModel): The trained LightGBM model.
             data (pd.DataFrame): The data on which to make predictions.
             task_type (str): The type of task ('classification' or 'regression').
+            categoricals (List[str], optional): List of categorical feature names.
         Returns:
             np.ndarray: The predicted values.
         """
+        if categoricals:
+            data = self.validate_categoricals(data, categoricals)
         if task_type == 'regression':
             return model.predict(data)
         elif task_type == 'classification':
