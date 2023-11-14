@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Optional, Dict, Any, bool
+from typing import List, Tuple, Set, Optional, Dict, Any
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold
