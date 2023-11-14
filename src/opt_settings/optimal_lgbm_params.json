@@ -2,7 +2,7 @@
   "n_estimators":10000,
   "learning_rate":0.005,
   "num_leaves":32,
-  "colsample_bytree":0.1,
+  "colsample_bytree":0.10,
   "subsample":0.90,
   "max_depth":10,
   "reg_alpha":0.04,
