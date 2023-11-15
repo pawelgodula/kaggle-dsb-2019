@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument(
         "--sample_rate",
         type=float,
-        default=0.10,
+        default=0.05,
         help="Sample rate for data processing",
     )
     parser.add_argument(
