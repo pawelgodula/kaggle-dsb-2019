@@ -69,7 +69,7 @@ def parse_args():
 
 
 def feature_engineering(path_to_data, num_parallel_processes, sample_rate):
-    main_data_processor = MainData(path_to_data, sampling=1.0)
+    main_data_processor = MainData(path_to_data, sampling=0.1)
     df, target_col, y, categorical_feats = main_data_processor.process()
     del main_data_processor
     gc.collect()
