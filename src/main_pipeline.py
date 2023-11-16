@@ -74,8 +74,15 @@ def feature_engineering(path_to_data, num_parallel_processes, sample_rate):
     del main_data_processor
     gc.collect()
 
+    bureau_processor = BureauData(path_to_data, num_parallel_processes, sample_rate)
+    bureau_features = bureau_processor.process()
+    bureau_id_map = bureau_processor.get_id_mapping()
+    for feat_df in bureau_features:
+        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
+    del bureau_processor, bureau_features
+    gc.collect()
+
     processors = [
-        BureauData(path_to_data, num_parallel_processes, sample_rate),
         PreviousApplicationData(path_to_data, num_parallel_processes, sample_rate),
         InstallmentsPaymentsData(path_to_data, num_parallel_processes, sample_rate),
         POSCashBalanceData(path_to_data, num_parallel_processes, sample_rate),
