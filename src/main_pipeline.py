@@ -68,128 +68,86 @@ def parse_args():
     return args
 
 
-def main_pipeline(args):
-    path_to_data = args.path_to_data
-    path_to_opt_settings = args.path_to_opt_settings
-    sample_rate = args.sample_rate
-    num_parallel_processes = args.num_parallel_processes
-    use_precomputed_optimal_settings = args.use_precomputed_optimal_settings
-    n_fold = args.n_fold
-    seed = args.seed
-    metric = args.metric
-    task_type = args.task_type
-
-    ### Feature engineering
-
+def feature_engineering(path_to_data, num_parallel_processes, sample_rate):
     main_data_processor = MainData(path_to_data, sampling=1.0)
     df, target_col, y, categorical_feats = main_data_processor.process()
     del main_data_processor
     gc.collect()
 
-    bureau_processor = BureauData(path_to_data, num_parallel_processes, sample_rate)
-    bureau_features = bureau_processor.process()
-    bureau_id_map = bureau_processor.get_id_mapping()
-    for feat_df in bureau_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del bureau_processor, bureau_features
-    gc.collect()
+    processors = [
+        BureauData(path_to_data, num_parallel_processes, sample_rate),
+        PreviousApplicationData(path_to_data, num_parallel_processes, sample_rate),
+        InstallmentsPaymentsData(path_to_data, num_parallel_processes, sample_rate),
+        POSCashBalanceData(path_to_data, num_parallel_processes, sample_rate),
+        CreditCardBalanceData(path_to_data, num_parallel_processes, sample_rate),
+        BureauBalanceData(path_to_data, bureau_id_map, num_parallel_processes, sample_rate)
+    ]
 
-    prev_app_processor = PreviousApplicationData(
-        path_to_data, num_parallel_processes, sample_rate
-    )
-    prev_credit_app_features = prev_app_processor.process()
-    for feat_df in prev_credit_app_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del prev_app_processor, prev_credit_app_features
-    gc.collect()
+    for processor in processors:
+        feature = processor.process()
+        for feat_df in feature:
+            df = df.merge(feat_df, on="SK_ID_CURR", how="left")
+        del processor, feature
+        gc.collect()
 
-    inst_pmt_processor = InstallmentsPaymentsData(
-        path_to_data, num_parallel_processes, sample_rate
-    )
-    inst_pmt_features = inst_pmt_processor.process()
-    for feat_df in inst_pmt_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del inst_pmt_processor, inst_pmt_features
-    gc.collect()
+    return df, y, categorical_feats
 
-    pos_bal_processor = POSCashBalanceData(
-        path_to_data, num_parallel_processes, sample_rate
-    )
-    pos_bal_features = pos_bal_processor.process()
-    for feat_df in pos_bal_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del pos_bal_processor, pos_bal_features
-    gc.collect()
 
-    cc_bal_processor = CreditCardBalanceData(
-        path_to_data, num_parallel_processes, sample_rate
-    )
-    cc_bal_features = cc_bal_processor.process()
-    for feat_df in cc_bal_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del cc_bal_processor, cc_bal_features
-    gc.collect()
-
-    buro_bal_processor = BureauBalanceData(
-        path_to_data, bureau_id_map, num_parallel_processes, sample_rate
-    )
-    buro_bal_features = buro_bal_processor.process()
-    for feat_df in buro_bal_features:
-        df = df.merge(feat_df, on="SK_ID_CURR", how="left")
-    del buro_bal_processor, buro_bal_features
-    gc.collect()
-
-    ### Feature selection & hyperparameter optimization
-
-    if use_precomputed_optimal_settings:
-        unimportant_features, optimal_lgb_params = load_features_and_params(
-            path_to_opt_settings
-        )
+def feature_selection_and_hyperparameter_optimization(df, y, categorical_feats, args):
+    if args.use_precomputed_optimal_settings:
+        unimportant_features, optimal_lgb_params = load_features_and_params(args.path_to_opt_settings)
     else:
         full_df = df.iloc[: y.shape[0], :].copy()
         full_df["TARGET"] = y
-        trainer_lgb = TrainerLGBM(seed=seed)
+        trainer_lgb = TrainerLGBM(seed=args.seed)
         unimportant_features, optimal_lgb_params = trainer_lgb.optimize_features_params(
             full_df,
-            task_type,
+            args.task_type,
             None,
             full_df.columns.drop("TARGET"),
             "TARGET",
-            metric,
+            args.metric,
             2,
             1,
             3600,
             categoricals=categorical_feats,
         )
-
     df.drop(columns=unimportant_features, inplace=True)
+    return df, optimal_lgb_params
 
-    ### Train the main model
 
+def train_model(df, y, categorical_feats, args, optimal_lgb_params):
     full_df = df.iloc[: y.shape[0], :].copy()
     full_df["TARGET"] = y
-    trainer_lgb = TrainerLGBM(seed=seed)
+    trainer_lgb = TrainerLGBM(seed=args.seed)
     models, _, val_metric = trainer_lgb.fit_kfold(
         full_df,
-        task_type,
+        args.task_type,
         optimal_lgb_params,
         full_df.columns.drop("TARGET"),
         "TARGET",
-        metric,
-        n_fold,
+        args.metric,
+        args.n_fold,
         False,
         categorical_feats,
     )
-    print(f"CV {metric}: {val_metric}")
+    print(f"CV {args.metric}: {val_metric}")
+    return models
 
-    ### Make a submission
 
-    pred_df = df.iloc[y.shape[0] :, :][full_df.columns.drop("TARGET")]
-    id_ = df.iloc[y.shape[0] :, :]["SK_ID_CURR"]
-    submission_df = trainer_lgb.build_submission(
-        models, pred_df, id_, task_type, categorical_feats
-    )
+def build_submission(df, y, models, args, categorical_feats):
+    pred_df = df.iloc[y.shape[0]:, :][df.columns.drop("TARGET")]
+    id_ = df.iloc[y.shape[0]:, :]["SK_ID_CURR"]
+    submission_df = trainer_lgb.build_submission(models, pred_df, id_, args.task_type, categorical_feats)
     submission_df.columns = ["SK_ID_CURR", "TARGET"]
+    return submission_df
+
+
+def main_pipeline(args):
+    df, y, categorical_feats = feature_engineering(args.path_to_data, args.num_parallel_processes, args.sample_rate)
+    df, optimal_lgb_params = feature_selection_and_hyperparameter_optimization(df, y, categorical_feats, args)
+    models = train_model(df, y, categorical_feats, args, optimal_lgb_params)
+    submission_df = build_submission(df, y, models, args, categorical_feats)
     submission_df.to_csv("submission.csv", index=False)
 
 
