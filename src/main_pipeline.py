@@ -143,7 +143,7 @@ def train_model(df, y, categorical_feats, args, optimal_lgb_params):
 
 
 def build_submission(df, y, models, args, categorical_feats):
-    pred_df = df.iloc[y.shape[0]:, :][df.columns.drop("TARGET")]
+    pred_df = df.iloc[y.shape[0]:, :]
     id_ = df.iloc[y.shape[0]:, :]["SK_ID_CURR"]
     submission_df = trainer_lgb.build_submission(models, pred_df, id_, args.task_type, categorical_feats)
     submission_df.columns = ["SK_ID_CURR", "TARGET"]
