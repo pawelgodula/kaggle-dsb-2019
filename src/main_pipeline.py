@@ -12,14 +12,20 @@ from data_processors import (
     BureauBalanceData,
 )
 from utils import load_features_and_params
-
+from typing import Tuple, List, Any
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="lightgbm.*")
 warnings.filterwarnings("ignore", category=UserWarning, module="optuna.*")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """
+    Parses command line arguments.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description="Home Credit Default Risk Prediction")
     parser.add_argument(
         "--path_to_data",
@@ -67,8 +73,18 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def feature_engineering(path_to_data: str, num_parallel_processes: int, sample_rate: float) -> Tuple[pd.DataFrame, np.array, List[str]]:
+    """
+    Performs feature engineering on the dataset.
 
-def feature_engineering(path_to_data, num_parallel_processes, sample_rate):
+    Args:
+        path_to_data: The path to the data directory.
+        num_parallel_processes: Number of parallel processes for data processing.
+        sample_rate: The sampling rate for data processing.
+
+    Returns:
+        Tuple containing the processed DataFrame, target values array, and a list of categorical features.
+    """
     main_data_processor = MainData(path_to_data, sampling=0.1)
     df, target_col, y, categorical_feats = main_data_processor.process()
     del main_data_processor
@@ -99,8 +115,19 @@ def feature_engineering(path_to_data, num_parallel_processes, sample_rate):
 
     return df, y, categorical_feats
 
+def feature_selection_and_hyperparameter_optimization(df: pd.DataFrame, y: np.array, categorical_feats: List[str], args: argparse.Namespace) -> Tuple[pd.DataFrame, dict]:
+    """
+    Performs feature selection and hyperparameter optimization.
 
-def feature_selection_and_hyperparameter_optimization(df, y, categorical_feats, args):
+    Args:
+        df: DataFrame containing the features.
+        y: Array containing the target values.
+        categorical_feats: List of categorical feature names.
+        args: Parsed arguments.
+
+    Returns:
+        Tuple containing the DataFrame with selected features and the optimal hyperparameters.
+    """
     if args.use_precomputed_optimal_settings:
         unimportant_features, optimal_lgb_params = load_features_and_params(args.path_to_opt_settings)
     else:
@@ -122,8 +149,20 @@ def feature_selection_and_hyperparameter_optimization(df, y, categorical_feats, 
     df.drop(columns=unimportant_features, inplace=True)
     return df, optimal_lgb_params
 
+def train_model(df: pd.DataFrame, y: np.array, categorical_feats: List[str], args: argparse.Namespace, optimal_lgb_params: dict) -> List[lgb.LGBMModel]:
+    """
+    Trains the model using the given dataset.
 
-def train_model(df, y, categorical_feats, args, optimal_lgb_params):
+    Args:
+        df: DataFrame containing the features.
+        y: Array containing the target values.
+        categorical_feats: List of categorical feature names.
+        args: Parsed arguments.
+        optimal_lgb_params: Optimal hyperparameters for the model.
+
+    Returns:
+        Trained models.
+    """
     full_df = df.iloc[: y.shape[0], :].copy()
     full_df["TARGET"] = y
     trainer_lgb = TrainerLGBM(seed=args.seed)
@@ -142,7 +181,20 @@ def train_model(df, y, categorical_feats, args, optimal_lgb_params):
     return models
 
 
-def build_submission(df, y, models, args, categorical_feats):
+def build_submission(df: pd.DataFrame, y: np.array, models: List[lgb.LGBMModel], args: argparse.Namespace, categorical_feats: List[str]) -> pd.DataFrame:
+    """
+    Builds the submission file from the trained models.
+
+    Args:
+        df: DataFrame containing the features.
+        y: Array containing the target values.
+        models: Trained models.
+        args: Parsed arguments.
+        categorical_feats: List of categorical feature names.
+
+    Returns:
+        DataFrame for submission.
+    """
     pred_df = df.iloc[y.shape[0]:, :]
     id_ = df.iloc[y.shape[0]:, :]["SK_ID_CURR"]
     trainer_lgb = TrainerLGBM(seed=args.seed)
@@ -151,7 +203,13 @@ def build_submission(df, y, models, args, categorical_feats):
     return submission_df
 
 
-def main_pipeline(args):
+def main_pipeline(args: argparse.Namespace) -> None:
+    """
+    Main pipeline for feature engineering, model training, and submission file generation. Creates and saves submission.csv file required in the competition.
+
+    Args:
+        args: Parsed arguments.
+    """
     df, y, categorical_feats = feature_engineering(args.path_to_data, args.num_parallel_processes, args.sample_rate)
     df, optimal_lgb_params = feature_selection_and_hyperparameter_optimization(df, y, categorical_feats, args)
     models = train_model(df, y, categorical_feats, args, optimal_lgb_params)
@@ -159,7 +217,10 @@ def main_pipeline(args):
     submission_df.to_csv("submission.csv", index=False)
 
 
-def main():
+def main() -> None:
+    """
+    Main function to run the pipeline.
+    """
     args = parse_args()
     main_pipeline(args)
 
