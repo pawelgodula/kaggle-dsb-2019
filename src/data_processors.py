@@ -9,7 +9,7 @@ import time
 from sklearn import preprocessing
 from sklearn.preprocessing import OneHotEncoder
 from utils import dispersion, share_na, light_divide, reduce_column_names
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 ### business settings
 common_sense_interest_threshold = 0.085
@@ -583,7 +583,30 @@ class MainData:
 
 
 class BureauData:
-    def __init__(self, path_to_data, num_parallel_processes, sampling):
+    """
+    BureauData class for processing and handling data related to credit bureau information.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        num_parallel_processes (int): Number of parallel processes to use for data processing.
+        sampling (float): Sampling rate for the data processing.
+        bureau_df (pd.DataFrame): DataFrame containing bureau data.
+        dataset_name (str): Name of the dataset.
+        agg_map (dict): Aggregation mapping for computing statistics.
+        feature_dfs_to_merge_with_main_df (list): List to store feature DataFrames to be merged with the main DataFrame.
+        credit_types (list): List of different credit types.
+        credit_statuses (list): List of credit statuses.
+    """
+    
+    def __init__(self, path_to_data: str, num_parallel_processes: int, sampling: float) -> None:
+        """
+        Initializes the BureauData object with data path, number of parallel processes, and sampling rate.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            num_parallel_processes (int): Number of parallel processes to use for data processing.
+            sampling (float): Sampling rate for the data processing.
+        """
         self.bureau_df = pd.read_csv(path_to_data + "bureau.csv")
         self.dataset_name = "bureau"
         self.agg_map = aggregation_recipes[self.dataset_name]
@@ -600,7 +623,13 @@ class BureauData:
         self.sampling = sampling
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> 'BureauData':
+        """
+        Preprocesses the bureau data by applying sampling and generating additional features.
+
+        Returns:
+            BureauData: The instance of BureauData with preprocessed data.
+        """
         if self.sampling < 1:
             self.bureau_df = self.bureau_df.sample(frac=self.sampling)
 
@@ -659,7 +688,18 @@ class BureauData:
 
         return self
 
-    def process_segment_of_credit_data(self, credit_type, credit_status, name_prefix):
+    def process_segment_of_credit_data(self, credit_type: str, credit_status: str, name_prefix: str) -> pd.DataFrame:
+        """
+        Processes a segment of credit data based on credit type and status.
+
+        Args:
+            credit_type (str): The type of credit to filter.
+            credit_status (str): The status of the credit to filter.
+            name_prefix (str): The prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for the given segment.
+        """
         filtered = (
             self.bureau_df
             if credit_type == "all"
@@ -670,7 +710,13 @@ class BureauData:
         stats.columns = reduce_column_names(stats, name_prefix)
         return stats.reset_index()
 
-    def compute_features_concurrently(self):
+    def compute_features_concurrently(self) -> 'BureauData':
+        """
+        Computes features concurrently for different segments of credit data.
+
+        Returns:
+            BureauData: The instance of BureauData with computed features.
+        """
         futures = []
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
@@ -689,17 +735,49 @@ class BureauData:
 
         return self
 
-    def get_id_mapping(self):
+    def get_id_mapping(self) -> pd.DataFrame:
+        """
+        Gets the mapping between bureau IDs and current IDs.
+
+        Returns:
+            pd.DataFrame: A DataFrame with the mapping of bureau IDs to current IDs.
+        """
         return self.bureau_df[["SK_ID_BUREAU", "SK_ID_CURR"]]
 
-    def process(self):
+    def process(self) -> List[pd.DataFrame]:
+        """
+        Processes the bureau data to compute features and returns a list of feature DataFrames.
+
+        Returns:
+            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+        """
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
         return self.feature_dfs_to_merge_with_main_df
 
-
 class PreviousApplicationData:
-    def __init__(self, path_to_data, num_parallel_processes, sampling=1):
+    """
+    A class for processing and handling data related to previous loan applications.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        num_parallel_processes (int): Number of parallel processes for data processing.
+        sampling (float): Sampling rate for the data processing.
+        pr_app (pd.DataFrame): DataFrame containing previous application data.
+        dataset_name (str): Name of the dataset.
+        agg_map (dict): Aggregation mapping for computing statistics.
+        feature_dfs_to_merge_with_main_df (list): List of feature DataFrames to be merged with the main DataFrame.
+        categorical_variables (list): List of names of categorical variables.
+    """
+    def __init__(self, path_to_data: str, num_parallel_processes: int, sampling: float = 1.0) -> None:
+        """
+        Initializes the PreviousApplicationData object with data path, number of parallel processes, and sampling rate.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            num_parallel_processes (int): Number of parallel processes to use for data processing.
+            sampling (float): Sampling rate for the data processing.
+        """
         self.pr_app = pd.read_csv(path_to_data + "previous_application.csv")
         self.dataset_name = "previous_app"
         self.agg_map = aggregation_recipes[self.dataset_name]
@@ -722,7 +800,13 @@ class PreviousApplicationData:
         self.sampling = sampling
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> 'PreviousApplicationData':
+        """
+        Preprocesses the previous application data by applying sampling and generating additional features.
+
+        Returns:
+            PreviousApplicationData: The instance of PreviousApplicationData with preprocessed data.
+        """
         if self.sampling < 1:
             self.pr_app = self.pr_app.sample(frac=self.sampling)
 
@@ -763,7 +847,13 @@ class PreviousApplicationData:
 
         return self
 
-    def encode_categoricals(self):
+    def encode_categoricals(self) -> 'PreviousApplicationData':
+        """
+        Encodes categorical variables using label encoding and one-hot encoding.
+
+        Returns:
+            PreviousApplicationData: The instance of PreviousApplicationData with encoded categorical variables.
+        """
         lbl = preprocessing.LabelEncoder()
         for col in self.categorical_variables:
             self.pr_app[col] = lbl.fit_transform(self.pr_app[col].astype(str))
@@ -778,7 +868,13 @@ class PreviousApplicationData:
 
         return self
 
-    def compute_xsell_features(self):
+    def compute_xsell_features(self) -> 'PreviousApplicationData':
+        """
+        Computes features related to cross-selling.
+
+        Returns:
+            PreviousApplicationData: The instance of PreviousApplicationData with computed cross-selling features.
+        """
         agg_map = {"is_x_sell": ["sum"]}
         for lookback_window in [-30, -360, -np.inf]:
             cur_term_stats = (
@@ -793,13 +889,29 @@ class PreviousApplicationData:
 
         return self
 
-    def compute_active_closed_features(self, active_flag, name_prefix):
+    def compute_active_closed_features(self, active_flag: bool, name_prefix: str) -> pd.DataFrame:
+        """
+        Computes features for either active or closed previous applications.
+
+        Args:
+            active_flag (bool): Flag indicating whether to compute for active or closed applications.
+            name_prefix (str): Prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for the given segment.
+        """
         filtered = self.pr_app[self.pr_app["active"] == active_flag]
         grouped = filtered.groupby("SK_ID_CURR").agg(self.agg_map).astype(np.float32)
         grouped.columns = reduce_column_names(grouped, name_prefix)
         return grouped.reset_index()
 
-    def compute_active_closed_features_parallel(self):
+    def compute_active_closed_features_parallel(self) -> 'PreviousApplicationData':
+        """
+        Computes features for active and closed previous applications in parallel.
+
+        Returns:
+            PreviousApplicationData: The instance of PreviousApplicationData with computed features.
+        """
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
         ) as executor:
@@ -821,7 +933,16 @@ class PreviousApplicationData:
 
         return self
 
-    def compute_status_features(self, status):
+    def compute_status_features(self, status: str) -> pd.DataFrame:
+        """
+        Computes features based on the status of the previous application.
+
+        Args:
+            status (str): The status of the previous application to filter by.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for applications with the specified status.
+        """
         agg_map = aggregation_recipes["previous_app"]
         status_stats = (
             self.pr_app[self.pr_app["NAME_CONTRACT_STATUS"] == status]
@@ -834,7 +955,13 @@ class PreviousApplicationData:
 
         return status_stats.reset_index()
 
-    def compute_status_features_parallel(self):
+    def compute_status_features_parallel(self) -> 'PreviousApplicationData':
+        """
+        Computes features for different statuses of previous applications in parallel.
+
+        Returns:
+            PreviousApplicationData: The instance of PreviousApplicationData with computed status features.
+        """
         statuses = ["Approved", "Refused"]
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
@@ -849,7 +976,13 @@ class PreviousApplicationData:
 
         return self
 
-    def process(self):
+    def process(self) -> List[pd.DataFrame]:
+        """
+        Processes the previous application data to compute features and returns a list of feature DataFrames.
+
+        Returns:
+            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+        """
         self.preprocess_data().encode_categoricals().compute_xsell_features().compute_status_features_parallel().compute_active_closed_features_parallel()
         gc.collect()
 
@@ -857,7 +990,31 @@ class PreviousApplicationData:
 
 
 class InstallmentsPaymentsData:
-    def __init__(self, path_to_data, num_parallel_processes, sampling=1):
+    """
+    A class for processing and handling data related to installment payments.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        num_parallel_processes (int): Number of parallel processes for data processing.
+        sampling (float): Sampling rate for the data processing.
+        ip (pd.DataFrame): DataFrame containing installment payments data.
+        feature_dfs_to_merge_with_main_df (list): List of feature DataFrames to be merged with the main DataFrame.
+        days_in_month (int): Number of days in a month used for calculations.
+        dataset_name (str): Name of the dataset.
+        agg_map (dict): Aggregation mapping for computing statistics.
+        lb_window_prefix_map (dict): Mapping of lookback windows to their prefixes.
+        version_filters (dict): Filters for different versions of installment payments.
+    """
+    
+    def __init__(self, path_to_data: str, num_parallel_processes: int, sampling: float = 1) -> None:
+        """
+        Initializes the InstallmentsPaymentsData object with data path, number of parallel processes, and sampling rate.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            num_parallel_processes (int): Number of parallel processes to use for data processing.
+            sampling (float): Sampling rate for the data processing.
+        """
         self.ip = pd.read_csv(path_to_data + "installments_payments.csv").sort_values(
             ["SK_ID_PREV", "DAYS_INSTALMENT"]
         )
@@ -883,7 +1040,13 @@ class InstallmentsPaymentsData:
         self.sampling = sampling
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> 'InstallmentsPaymentsData':
+        """
+        Preprocesses the installment payments data by applying sampling and generating additional features.
+
+        Returns:
+            InstallmentsPaymentsData: The instance of InstallmentsPaymentsData with preprocessed data.
+        """
         if self.sampling < 1:
             self.ip = self.ip.sample(frac=self.sampling)
         self.ip["delay"] = -(self.ip["DAYS_INSTALMENT"] - self.ip["DAYS_ENTRY_PAYMENT"])
@@ -913,14 +1076,35 @@ class InstallmentsPaymentsData:
 
         return self
 
-    def compute_features_for_group(self, group_df, name_prefix):
+    def compute_features_for_group(self, group_df: pd.DataFrame, name_prefix: str) -> pd.DataFrame:
+        """
+        Computes features for a given group of installment payment data.
+
+        Args:
+            group_df (pd.DataFrame): The DataFrame representing a group of installment payment data.
+            name_prefix (str): Prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for the given group.
+        """
         stats = group_df.groupby("SK_ID_CURR").agg(self.agg_map).astype(np.float32)
         stats.columns = reduce_column_names(stats, name_prefix)
         return stats.reset_index()
 
     def compute_features_for_lbwindow_and_version(
-        self, lookback_window, version_filter, prefix
-    ):
+        self, lookback_window: float, version_filter: Any, prefix: str
+    ) -> pd.DataFrame:
+        """
+        Computes features for installment payments based on a specified lookback window and version filter.
+
+        Args:
+            lookback_window (float): The lookback window for filtering the data.
+            version_filter (Any): The filter for installment payment versions.
+            prefix (str): Prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics based on the given filters.
+        """
         # Filter based on lookback window
         filtered = (
             self.ip
@@ -947,7 +1131,13 @@ class InstallmentsPaymentsData:
         # Compute features
         return self.compute_features_for_group(filtered, prefix)
 
-    def compute_features_concurrently(self):
+    def compute_features_concurrently(self) -> 'InstallmentsPaymentsData':
+        """
+        Computes features concurrently for different combinations of lookback windows and version filters.
+
+        Returns:
+            InstallmentsPaymentsData: The instance of InstallmentsPaymentsData with computed features.
+        """
         futures = []
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
@@ -970,7 +1160,13 @@ class InstallmentsPaymentsData:
 
         return self
 
-    def process(self):
+    def process(self) -> List[pd.DataFrame]:
+        """
+        Processes the installment payments data to compute features and returns a list of feature DataFrames.
+
+        Returns:
+            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+        """
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
 
@@ -1051,8 +1247,30 @@ class POSCashBalanceData:
         return self.feature_dfs_to_merge_with_main_df
 
 
-class CreditCardBalanceData:
-    def __init__(self, path_to_data, num_parallel_processes, sampling=1):
+class POSCashBalanceData:
+    """
+    A class for processing and handling data related to POS (Point of Sale) cash balance.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        num_parallel_processes (int): Number of parallel processes for data processing.
+        sampling (float): Sampling rate for the data processing.
+        pos_bal (pd.DataFrame): DataFrame containing POS cash balance data.
+        feature_dfs_to_merge_with_main_df (list): List of feature DataFrames to be merged with the main DataFrame.
+        dataset_name (str): Name of the dataset.
+        agg_map (dict): Aggregation mapping for computing statistics.
+        filter_conditions (set): Set of conditions for filtering the data.
+    """
+    
+    def __init__(self, path_to_data: str, num_parallel_processes: int, sampling: float = 1) -> None:
+        """
+        Initializes the POSCashBalanceData object with data path, number of parallel processes, and sampling rate.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            num_parallel_processes (int): Number of parallel processes to use for data processing.
+            sampling (float): Sampling rate for the data processing.
+        """
         self.cc_bal = pd.read_csv(path_to_data + "credit_card_balance.csv")
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "cc_bal"
@@ -1061,7 +1279,13 @@ class CreditCardBalanceData:
         self.sampling = sampling
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> 'POSCashBalanceData':
+        """
+        Preprocesses the POS cash balance data by applying sampling and generating additional features.
+
+        Returns:
+            POSCashBalanceData: The instance of POSCashBalanceData with preprocessed data.
+        """
         if self.sampling < 1:
             self.cc_bal = self.cc_bal.sample(frac=self.sampling)
 
@@ -1097,12 +1321,31 @@ class CreditCardBalanceData:
 
         return self
 
-    def compute_features_for_group(self, group_df, prefix):
+    def compute_features_for_group(self, group_df: pd.DataFrame, prefix: str) -> pd.DataFrame:
+        """
+        Computes features for a given group of POS cash balance data.
+
+        Args:
+            group_df (pd.DataFrame): The DataFrame representing a group of POS cash balance data.
+            prefix (str): Prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for the given group.
+        """
         stats = group_df.groupby("SK_ID_CURR").agg(self.agg_map).astype(np.float32)
         stats.columns = reduce_column_names(stats, f"{self.dataset_name}_{prefix}")
         return stats.reset_index()
 
-    def compute_features_concurrently(self):
+    def compute_features_concurrently(self, filter_conditions: Set[str]) -> 'POSCashBalanceData':
+        """
+        Computes features concurrently for different filter conditions of POS cash balance data.
+
+        Args:
+            filter_conditions (Set[str]): A set of conditions for filtering the data.
+
+        Returns:
+            POSCashBalanceData: The instance of POSCashBalanceData with computed features.
+        """
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
         ) as executor:
@@ -1123,19 +1366,58 @@ class CreditCardBalanceData:
 
         return self
 
-    def merge_features(self, main_df):
+    def merge_features(self, main_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Merges the computed features with the main DataFrame.
+
+        Args:
+            main_df (pd.DataFrame): The main DataFrame to merge the features with.
+
+        Returns:
+            pd.DataFrame: The main DataFrame merged with the computed features.
+        """
         for feat_df in self.feature_dfs_to_merge_with_main_df:
             main_df = main_df.merge(feat_df, on="SK_ID_CURR", how="left")
         return main_df
 
-    def process(self):
+    def process(self) -> List[pd.DataFrame]:
+            """
+            Processes the POS cash balance data to compute features and returns a list of feature DataFrames.
+    
+            Returns:
+                List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+            """
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
         return self.feature_dfs_to_merge_with_main_df
 
 
 class BureauBalanceData:
-    def __init__(self, path_to_data, bureau_id_map, num_parallel_processes, sampling=1):
+    """
+    A class for processing and handling data related to bureau balance.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        bureau_id_map (pd.DataFrame): DataFrame mapping bureau IDs to current IDs.
+        num_parallel_processes (int): Number of parallel processes for data processing.
+        sampling (float): Sampling rate for the data processing.
+        buro_balance (pd.DataFrame): DataFrame containing bureau balance data.
+        dataset_name (str): Name of the dataset.
+        agg_map (dict): Aggregation mapping for computing statistics.
+        feature_dfs_to_merge_with_main_df (list): List of feature DataFrames to be merged with the main DataFrame.
+        time_windows (dict): Dictionary of time windows for filtering the data.
+    """
+    
+    def __init__(self, path_to_data: str, bureau_id_map: pd.DataFrame, num_parallel_processes: int, sampling: float = 1) -> None:
+        """
+        Initializes the BureauBalanceData object with data path, bureau ID map, number of parallel processes, and sampling rate.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            bureau_id_map (pd.DataFrame): DataFrame mapping bureau IDs to current IDs.
+            num_parallel_processes (int): Number of parallel processes to use for data processing.
+            sampling (float): Sampling rate for the data processing.
+        """
         self.buro_balance = pd.read_csv(path_to_data + "bureau_balance.csv")
         self.bureau_id_map = bureau_id_map
         self.dataset_name = "buro_bal"
@@ -1145,7 +1427,13 @@ class BureauBalanceData:
         self.sampling = 1
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> 'BureauBalanceData':
+        """
+        Preprocesses the bureau balance data by applying sampling and performing initial transformations.
+
+        Returns:
+            BureauBalanceData: The instance of BureauBalanceData with preprocessed data.
+        """
         if self.sampling < 1:
             self.buro_balance = self.buro_balance.sample(frac=self.sampling)
         self.buro_balance = self.buro_balance.merge(
@@ -1159,12 +1447,28 @@ class BureauBalanceData:
         self.buro_balance = pd.concat([self.buro_balance, one_hot], axis=1)
         return self
 
-    def compute_features_for_group(self, group_df, prefix):
+    def compute_features_for_group(self, group_df: pd.DataFrame, prefix: str) -> pd.DataFrame:
+        """
+        Computes features for a given group of bureau balance data.
+
+        Args:
+            group_df (pd.DataFrame): The DataFrame representing a group of bureau balance data.
+            prefix (str): Prefix for the column names in the resultant DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame with aggregated statistics for the given group.
+        """
         stats = group_df.groupby("SK_ID_CURR").agg(self.agg_map).astype(np.float32)
         stats.columns = reduce_column_names(stats, prefix)
         return stats.reset_index()
 
-    def compute_features_concurrently(self):
+    def compute_features_concurrently(self) -> 'BureauBalanceData':
+        """
+        Computes features concurrently for different time windows of bureau balance data.
+
+        Returns:
+            BureauBalanceData: The instance of BureauBalanceData with computed features.
+        """
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
         ) as executor:
@@ -1187,7 +1491,14 @@ class BureauBalanceData:
 
         return self
 
-    def process(self):
+
+    def process(self) -> List[pd.DataFrame]:
+        """
+        Processes the bureau balance data to compute features and returns a list of feature DataFrames.
+
+        Returns:
+            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+        """
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
         return self.feature_dfs_to_merge_with_main_df
