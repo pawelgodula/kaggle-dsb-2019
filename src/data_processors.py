@@ -183,7 +183,7 @@ class MainData:
         self.full_df = pd.concat([self.train_df, self.test_df], axis=0)
         return self
 
-   def set_variable_types(self) -> 'MainData':
+    def set_variable_types(self) -> 'MainData':
         """
         Sets the variable types for categorical and numerical variables.
 
