@@ -29,7 +29,8 @@ Example (from running on a Kaggle notebook):
 
 ### 5. Requirements
 
-256GB RAM is required in order to run the main pipeline without sampling. 
+By default, the sampling rate is set to 0.01, enabling the pipeline to run on a Kaggle Notebook (with 4 CPUs and 32GB RAM) in approximately 40 minutes. 
+Without sampling, it requires 256GB of RAM and takes about 24 hours to complete.
 
 ## Solution Architecture
 
