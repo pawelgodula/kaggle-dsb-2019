@@ -9,6 +9,7 @@ import time
 from sklearn import preprocessing
 from sklearn.preprocessing import OneHotEncoder
 from utils import dispersion, share_na, light_divide, reduce_column_names
+from typing import List, Tuple
 
 ### business settings
 common_sense_interest_threshold = 0.085
@@ -131,7 +132,28 @@ aggregation_recipes = {
 
 
 class MainData:
-    def __init__(self, path_to_data, sampling=1):
+    """
+    MainData class for processing and handling data related to loan applications.
+
+    Attributes:
+        path_to_data (str): Path to the data directory.
+        sampling (float): Sampling rate for the training data.
+        train_df (pd.DataFrame): DataFrame containing training data.
+        test_df (pd.DataFrame): DataFrame containing test data.
+        full_df (pd.DataFrame): DataFrame containing combined training and test data.
+        target_col (List[str]): List containing the name of the target column.
+        y (np.array): Array containing target values.
+        categorical_variables (List[str]): List of names of categorical variables.
+        numerical_variables (List[str]): List of names of numerical variables.
+    """
+    def __init__(self, path_to_data: str, sampling: float = 1.0) -> None:
+        """
+        Constructs all the necessary attributes for the MainData object.
+
+        Args:
+            path_to_data (str): Path to the data directory.
+            sampling (float): Sampling rate for the training data.
+        """
         self.path_to_data = path_to_data
         self.train_df = None
         self.test_df = None
@@ -141,8 +163,15 @@ class MainData:
         self.categorical_variables = []
         self.numerical_variables = []
         self.sampling = sampling
+        
+    def load_main_data(self) -> 'MainData':
+        """
+        Loads the main data from CSV files, applies sampling if necessary, 
+        and creates the combined data frame.
 
-    def load_main_data(self):
+        Returns:
+            MainData: The instance of MainData with loaded data.
+        """
         self.train_df = pd.read_csv(self.path_to_data + "application_train.csv")
         if self.sampling < 1:
             self.train_df = self.train_df.sample(frac=self.sampling)
@@ -154,7 +183,13 @@ class MainData:
         self.full_df = pd.concat([self.train_df, self.test_df], axis=0)
         return self
 
-    def set_variable_types(self):
+   def set_variable_types(self) -> 'MainData':
+        """
+        Sets the variable types for categorical and numerical variables.
+
+        Returns:
+            MainData: The instance of MainData with set variable types.
+        """
         self.categorical_variables = [
             "NAME_CONTRACT_TYPE",
             "CODE_GENDER",
@@ -281,8 +316,14 @@ class MainData:
             "AMT_REQ_CREDIT_BUREAU_YEAR",
         ]
         return self
+       
+    def fe_main(self) -> 'MainData':
+        """
+        Applies feature engineering on the main dataset.
 
-    def fe_main(self):
+        Returns:
+            MainData: The instance of MainData with engineered features.
+        """
         lbl = preprocessing.LabelEncoder()
         for col in self.categorical_variables:
             self.full_df.loc[:, col] = lbl.fit_transform(self.full_df[col].astype(str))
@@ -340,8 +381,18 @@ class MainData:
         self.full_df["app_completeness"] = self.full_df.isnull().sum(axis=1)
 
         return self
-
-    def generate_interest(self, credit_amt, annuity_amt):
+        
+    def generate_interest(self, credit_amt: float, annuity_amt: float) -> List[float]:
+        """
+        Generates a table of interest rates for different time periods.
+    
+        Args:
+            credit_amt (float): The credit amount.
+            annuity_amt (float): The annuity amount.
+    
+        Returns:
+            List[float]: A list of calculated interest rates for predetermined time periods.
+        """
         interest_table = []
         for i in [6, 12, 18, 24, 30, 36, 42, 48, 54, 60]:
             current_interest = ((annuity_amt * i) / credit_amt) ** (1 / (i / 12)) - 1
@@ -349,8 +400,18 @@ class MainData:
                 current_interest = -1
             interest_table.append(current_interest)
         return interest_table
-
-    def generate_interest_stats(self, row):
+    
+    def generate_interest_stats(self, row: List[float]) -> List[float]:
+        """
+        Calculates statistical measures (minimum, maximum, mean, median, dispersion, count) 
+        for a given list of interest rates, filtering out values below a common-sense threshold.
+    
+        Args:
+            row (List[float]): A list of interest rates.
+    
+        Returns:
+            List[float]: A list containing statistical measures of the interest rates.
+        """
         row_filtered = [x for x in row if x > common_sense_interest_threshold]
         row_filtered = np.array(row_filtered)
 
@@ -375,7 +436,16 @@ class MainData:
             num_interest,
         ]
 
-    def generate_cnt_pmt_stats(self, row):
+    def generate_cnt_pmt_stats(self, row: List[float]) -> List[float]:
+        """
+        Generates statistics related to the count of payments above a defined interest threshold.
+    
+        Args:
+            row (List[float]): A list of interest rates.
+    
+        Returns:
+            List[float]: A list of calculated statistics related to the count of payments.
+        """
         common_sense_interest_threshold = 0  # Define a sensible threshold
         row_filtered = [
             (i + 1) * 6
@@ -394,7 +464,13 @@ class MainData:
             min_cnt = max_cnt = mean_cnt = median_cnt = disp_cnt = np.nan
         return [min_cnt, max_cnt, mean_cnt, median_cnt, disp_cnt]
 
-    def append_interest_features(self):
+    def append_interest_features(self) -> 'MainData':
+        """
+        Appends interest rate features and their statistics to the main DataFrame.
+    
+        Returns:
+            MainData: The instance of MainData with appended interest rate features.
+        """
         interest_table = self.full_df[["AMT_CREDIT", "AMT_ANNUITY"]].apply(
             lambda x: self.generate_interest(x["AMT_CREDIT"], x["AMT_ANNUITY"]), axis=1
         )
@@ -439,7 +515,14 @@ class MainData:
 
         return self
 
-    def add_categorical_counts(self):
+    def add_categorical_counts(self) -> 'MainData':
+        """
+        Adds count features for each categorical variable in the dataset. Counts are calculated separately 
+        for training, test, and the combined dataset.
+    
+        Returns:
+            MainData: The instance of MainData with added count features.
+        """
         num_train = self.train_df.shape[0]
 
         for current_feature in self.categorical_variables:
@@ -485,8 +568,15 @@ class MainData:
                 print(f"Failed to add counts for {current_feature}: {e}")
 
         return self
+        
+    def process(self) -> Tuple[pd.DataFrame, List[str], np.array, List[str]]:
+        """
+        Processes the data by executing the full data loading and feature engineering pipeline.
 
-    def process(self):
+        Returns:
+            Tuple[pd.DataFrame, List[str], np.array, List[str]]: Tuple containing the processed DataFrame, 
+            target column names, target values array, and a list of categorical variables.
+        """
         self.load_main_data().set_variable_types().fe_main().append_interest_features().add_categorical_counts()
         gc.collect()
         return self.full_df, self.target_col, self.y, self.categorical_variables
