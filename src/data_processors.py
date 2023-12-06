@@ -1307,32 +1307,8 @@ class POSCashBalanceData:
 
         return self.feature_dfs_to_merge_with_main_df
 
-
 class CreditCardBalanceData:
-    """
-    A class for processing and handling data related to credit card balance.
-
-    Attributes:
-        path_to_data (str): Path to the data directory.
-        num_parallel_processes (int): Number of parallel processes for data processing.
-        sampling (float): Sampling rate for the data processing.
-        cc_bal (pd.DataFrame): DataFrame containing credit card balance data.
-        feature_dfs_to_merge_with_main_df (list): List of feature DataFrames to be merged with the main DataFrame.
-        dataset_name (str): Name of the dataset.
-        agg_map (dict): Aggregation mapping for computing statistics.
-        filter_conditions (set): Set of conditions for filtering the data.
-    """
-    
-    def __init__(self, path_to_data: str, num_parallel_processes: int, sampling: float = 1) -> None:
-        """
-        Initializes the CreditCardBalanceData object with data path, number of parallel processes, and sampling rate.
-
-        Args:
-            path_to_data (str): Path to the data directory.
-            num_parallel_processes (int): Number of parallel processes to use for data processing.
-            sampling (float): Sampling rate for the data processing.
-        """
-        
+    def __init__(self, path_to_data, num_parallel_processes, sampling=1):
         self.cc_bal = pd.read_csv(path_to_data + "credit_card_balance.csv")
         self.feature_dfs_to_merge_with_main_df = []
         self.dataset_name = "cc_bal"
@@ -1341,13 +1317,7 @@ class CreditCardBalanceData:
         self.sampling = sampling
         self.n_proc = num_parallel_processes
 
-    def preprocess_data(self) -> 'CreditCardBalanceData':
-        """
-        Preprocesses the credit card balance data by applying sampling and generating additional features.
-
-        Returns:
-            CreditCardBalanceData: The instance of CreditCardBalanceData with preprocessed data.
-        """
+    def preprocess_data(self):
         if self.sampling < 1:
             self.cc_bal = self.cc_bal.sample(frac=self.sampling)
 
@@ -1383,31 +1353,12 @@ class CreditCardBalanceData:
 
         return self
 
-    def compute_features_for_group(self, group_df: pd.DataFrame, prefix: str) -> pd.DataFrame:
-        """
-        Computes features for a given group of credit card balance data.
-
-        Args:
-            group_df (pd.DataFrame): The DataFrame representing a group of credit card balance data.
-            prefix (str): Prefix for the column names in the resultant DataFrame.
-
-        Returns:
-            pd.DataFrame: A DataFrame with aggregated statistics for the given group.
-        """
+    def compute_features_for_group(self, group_df, prefix):
         stats = group_df.groupby("SK_ID_CURR").agg(self.agg_map).astype(np.float32)
         stats.columns = reduce_column_names(stats, f"{self.dataset_name}_{prefix}")
         return stats.reset_index()
 
-    def compute_features_concurrently(self, filter_conditions: Set[str]) -> 'CreditCardBalanceData':
-        """
-        Computes features concurrently for different filter conditions of credit card balance data.
-
-        Args:
-            filter_conditions (Set[str]): A set of conditions for filtering the data.
-
-        Returns:
-            CreditCardBalanceData: The instance of CreditCardBalanceData with computed features.
-        """
+    def compute_features_concurrently(self):
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.n_proc
         ) as executor:
@@ -1428,30 +1379,16 @@ class CreditCardBalanceData:
 
         return self
 
-    def merge_features(self, main_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Merges the computed features with the main DataFrame.
-
-        Args:
-            main_df (pd.DataFrame): The main DataFrame to merge the features with.
-
-        Returns:
-            pd.DataFrame: The main DataFrame merged with the computed features.
-        """
+    def merge_features(self, main_df):
         for feat_df in self.feature_dfs_to_merge_with_main_df:
             main_df = main_df.merge(feat_df, on="SK_ID_CURR", how="left")
         return main_df
-        
-    def process(self) -> List[pd.DataFrame]:
-        """
-        Processes the credit card balance data to compute features and returns a list of feature DataFrames.
 
-        Returns:
-            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
-        """
+    def process(self):
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
         return self.feature_dfs_to_merge_with_main_df
+
 
 
 class BureauBalanceData:
