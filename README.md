@@ -29,7 +29,7 @@ Example (from running on a Kaggle notebook):
 
 ### 5. Requirements
 
-128GB RAM is required in order to run the main pipeline without sampling. 
+256GB RAM is required in order to run the main pipeline without sampling. 
 
 ## Solution Architecture
 
