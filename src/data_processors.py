@@ -1381,12 +1381,12 @@ class POSCashBalanceData:
         return main_df
 
     def process(self) -> List[pd.DataFrame]:
-            """
-            Processes the POS cash balance data to compute features and returns a list of feature DataFrames.
-    
-            Returns:
-                List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
-            """
+        """
+        Processes the POS cash balance data to compute features and returns a list of feature DataFrames.
+
+        Returns:
+            List[pd.DataFrame]: A list of DataFrames with computed features for merging with the main DataFrame.
+        """
         self.preprocess_data().compute_features_concurrently()
         gc.collect()
         return self.feature_dfs_to_merge_with_main_df
